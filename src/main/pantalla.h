@@ -7,6 +7,7 @@ extern Adafruit_SSD1306 display;
 
 bool pantallaInit();
 bool pantallaPresente();
+bool pantallaReinit();
 void pantallaMsg(const char* l1, const char* l2, const char* l3);
 void beepExito();
 void beepError();

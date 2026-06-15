@@ -11,9 +11,13 @@ bool pantallaInit() {
 }
 
 bool pantallaPresente() {
-  if (!pantallaOk) return false;
   Wire.beginTransmission(OLED_ADDRESS);
   return (Wire.endTransmission() == 0);
+}
+
+bool pantallaReinit() {
+  pantallaOk = display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS);
+  return pantallaOk;
 }
 
 void pantallaMsg(const char* l1, const char* l2, const char* l3) {
@@ -42,10 +46,8 @@ void beepError() {
 
 void alertaDoble() {
   for (int i = 0; i < 2; i++) {
-    digitalWrite(LED_BUILTIN, HIGH);
     digitalWrite(BUZZER_PIN, HIGH);
     delay(200);
-    digitalWrite(LED_BUILTIN, LOW);
     digitalWrite(BUZZER_PIN, LOW);
     delay(200);
   }

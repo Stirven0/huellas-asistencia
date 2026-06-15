@@ -14,7 +14,11 @@ bool as608Init() {
 }
 
 bool as608Presente() {
-  if (!as608Ok) return false;
+  if (!as608Ok) {
+    finger.begin(57600);
+    delay(100);
+  }
+  while (Serial1.available()) Serial1.read();
   as608Ok = finger.verifyPassword();
   return as608Ok;
 }

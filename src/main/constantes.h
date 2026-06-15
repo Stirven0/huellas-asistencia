@@ -13,8 +13,8 @@
 #define OLED_WIDTH      128
 #define OLED_HEIGHT     64
 #define RTC_ADDRESS     0x68
-#define BUZZER_PIN      8
-#define BUTTON_PIN      7
+#define BUZZER_PIN      12
+#define BUTTON_PIN      3
 
 // CONFIGURACION
 #define MAX_FINGERPRINTS    127

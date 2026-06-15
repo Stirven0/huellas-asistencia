@@ -6,6 +6,12 @@
  *   LED13+buzzer(2x) → OLED → RTC → AS608 → SD
  * Monitoreo continuo: verifica perifericos periodicamente
  *
+ * Prioridad de errores en pantalla:
+ *   1. OLED (LED+buzzer, no hay pantalla)
+ *   2. microSD
+ *   3. RTC
+ *   4. AS608
+ *
  * Modos: ASISTENCIA (defecto) | ENROLAR | CORREGIR
  * Pulsador Pin 7 cambia modo.
  */
@@ -21,6 +27,10 @@ uint8_t modoActual = MODO_ASISTENCIA;
 bool botonPendiente = false;
 unsigned long ultimoBoton = 0;
 unsigned long ultimaVerificacion = 0;
+
+bool oledAlerta = false;
+bool rtcAlerta = false;
+bool as608Alerta = false;
 bool sdAlerta = false;
 
 #define VERIFICAR_CADA_MS 3000
@@ -66,7 +76,7 @@ void cambiarModo() {
 
   pantallaMsg("MODO:", nombreModo, "Coloca el dedo");
   beepExito();
-  delay(500);
+  delay(1500);
   while (digitalRead(BUTTON_PIN) == LOW) delay(10);
 }
 
@@ -77,41 +87,58 @@ void revisarBoton() {
   }
 }
 
+// Solo actualizan flags y recuperacion, sin mostrar errores
+void verificarOLED() {
+  if (!pantallaPresente()) {
+    oledAlerta = true;
+  } else if (oledAlerta) {
+    pantallaReinit();
+    oledAlerta = false;
+    pantallaMsg("OLED", "Recuperada", "");
+    beepExito();
+    delay(1000);
+  }
+}
+
 void verificarSD() {
   if (!sdPresente()) {
-    if (!sdAlerta) {
-      sdAlerta = true;
-      pantallaMsg("ALERTA", "microSD perdida", "No registrar");
-      beepError();
-    }
-  } else {
-    if (sdAlerta) {
-      sdAlerta = false;
-      initSD();
+    sdAlerta = true;
+  } else if (sdAlerta) {
+    initSD();
+    sdAlerta = false;
+    if (!oledAlerta) {
       pantallaMsg("microSD", "Recuperada", "");
       beepExito();
       delay(1000);
-      const char* nm = "ASISTENCIA";
-      if (modoActual == MODO_ENROLAMIENTO) nm = "ENROLAR";
-      else if (modoActual == MODO_CORRECCION) nm = "CORREGIR";
-      pantallaMsg("MODO:", nm, "Coloca el dedo");
     }
   }
 }
 
 void verificarRTC() {
   if (!rtcPresente()) {
-    pantallaMsg("RTC", "Perdido", "Revisar conexion");
-    beepError();
-    delay(500);
+    rtcAlerta = true;
+  } else if (rtcAlerta) {
+    rtcInit();
+    rtcAlerta = false;
+    if (!oledAlerta) {
+      pantallaMsg("RTC", "Recuperado", "");
+      beepExito();
+      delay(1000);
+    }
   }
 }
 
 void verificarAS608() {
   if (!as608Presente()) {
-    pantallaMsg("AS608", "Perdido", "Revisar cable");
-    beepError();
-    delay(500);
+    as608Alerta = true;
+  } else if (as608Alerta) {
+    as608Init();
+    as608Alerta = false;
+    if (!oledAlerta) {
+      pantallaMsg("AS608", "Recuperado", "");
+      beepExito();
+      delay(1000);
+    }
   }
 }
 
@@ -119,7 +146,6 @@ void setup() {
   Serial.begin(115200);
   delay(2000);
 
-  pinMode(LED_BUILTIN, OUTPUT);
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
@@ -136,12 +162,44 @@ void setup() {
 void loop() {
   if (millis() - ultimaVerificacion > VERIFICAR_CADA_MS) {
     ultimaVerificacion = millis();
-
+    verificarOLED();
     verificarSD();
     verificarRTC();
     verificarAS608();
   }
 
+  // PRIORIDAD 1: OLED perdida → solo LED+buzzer, nada mas
+  if (oledAlerta) {
+    alertaDoble();
+    delay(300);
+    return;
+  }
+
+  // PRIORIDAD 2: microSD perdida
+  if (sdAlerta) {
+    pantallaMsg("microSD", "Perdida", "No registrar");
+    beepError();
+    delay(300);
+    return;
+  }
+
+  // PRIORIDAD 3: RTC perdido
+  if (rtcAlerta) {
+    pantallaMsg("RTC", "Perdido", "Revisar conexion");
+    beepError();
+    delay(300);
+    return;
+  }
+
+  // PRIORIDAD 4: AS608 perdido
+  if (as608Alerta) {
+    pantallaMsg("AS608", "Perdido", "Revisar cable");
+    beepError();
+    delay(300);
+    return;
+  }
+
+  // TODO OK → modo normal
   revisarBoton();
 
   if (botonPendiente) {

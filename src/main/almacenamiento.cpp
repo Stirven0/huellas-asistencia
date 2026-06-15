@@ -11,14 +11,10 @@ bool initSD() {
 }
 
 bool sdPresente() {
-  if (!sdOk) return false;
-  File root = SD.open("/");
-  if (!root) {
-    sdOk = false;
-    return false;
-  }
-  root.close();
-  return true;
+  pinMode(SD_CS_PIN, OUTPUT);
+  digitalWrite(SD_CS_PIN, HIGH);
+  sdOk = SD.begin(SD_CS_PIN);
+  return sdOk;
 }
 
 bool buscarNombre(uint8_t id, char* nombreOut) {

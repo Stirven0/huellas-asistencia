@@ -144,6 +144,29 @@ Cada periférico se verifica en orden; si falta, no avanza y reintenta cada 2s. 
 
 ---
 
+## 2026-06-15 — Sesión Fase 2 (final)
+
+### Reasignación de pines
+
+| Señal | Antes | Después | Motivo |
+|-------|-------|---------|--------|
+| Buzzer | 8 → 13 | **12** | Pin 13 lo usaba el bootloader (pitidos al cargar) |
+| Pulsador | 7 | **3** | — |
+
+Se eliminaron referencias redundantes a `LED_BUILTIN` (ahora pin 13 queda libre).
+
+### Ajustes UX
+
+- Mensaje de cambio de modo en OLED: **500ms → 1500ms** para mejor legibilidad.
+
+### Estado final
+
+- **Fase 2 completa.** Código integrado compilado y cargado exitosamente.
+- Periféricos: buzzer Pin 12, pulsador Pin 3 (INPUT_PULLUP), OLED+RTC en I2C compartido, AS608 en Serial1, microSD en SPI (pines 50-53).
+- [ ] Pendiente: testeo físico de enrolamiento, asistencia, corrección y recuperación ante fallas.
+
+---
+
 ## Glosario de soluciones recurrentes
 
 ### Loopback Serial (afecta TODOS los tests)

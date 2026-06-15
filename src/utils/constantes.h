@@ -25,10 +25,10 @@
 #define RTC_ADDRESS     0x68  // Fija en hardware
 
 // Buzzer
-#define BUZZER_PIN      8
+#define BUZZER_PIN      12
 
 // Pulsador (INPUT_PULLUP → LOW = presionado)
-#define BUTTON_PIN      7
+#define BUTTON_PIN      3
 
 // ============================================================
 // CONFIGURACIÓN DEL SISTEMA

@@ -16,9 +16,9 @@ bool rtcInit() {
 }
 
 bool rtcPresente() {
-  if (!rtcOk) return false;
   Wire.beginTransmission(RTC_ADDRESS);
-  return (Wire.endTransmission() == 0);
+  rtcOk = (Wire.endTransmission() == 0);
+  return rtcOk;
 }
 
 void obtenerFechaHora(char* fechaOut, char* horaOut) {
