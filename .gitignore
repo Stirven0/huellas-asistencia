@@ -1,0 +1,19 @@
+# Arduino
+build/
+*.hex
+*.elf
+*.eep
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+*.log
+/tmp/
+
+# Stale duplicate (edit src/utils/constantes.h instead)
+/constantes.h
