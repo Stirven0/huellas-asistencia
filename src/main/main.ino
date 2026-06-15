@@ -67,12 +67,13 @@ void detectarPerifericos() {
 }
 
 void cambiarModo() {
-  modoActual = (modoActual + 1) % 3;
+  modoActual = (modoActual + 1) % 4;
 
   const char* nombreModo = "";
   if (modoActual == MODO_ASISTENCIA) nombreModo = "ASISTENCIA";
   else if (modoActual == MODO_ENROLAMIENTO) nombreModo = "ENROLAR";
-  else nombreModo = "CORREGIR";
+  else if (modoActual == MODO_CORRECCION) nombreModo = "CORREGIR";
+  else nombreModo = "FORMATEAR";
 
   pantallaMsg("MODO:", nombreModo, "Coloca el dedo");
   beepExito();
@@ -140,6 +141,65 @@ void verificarAS608() {
       delay(1000);
     }
   }
+}
+
+void formatearSistema() {
+  unsigned long inicio;
+  bool paso1 = false, paso2 = false;
+
+  pantallaMsg("FORMATEAR", "Manten 3s para", "confirmar");
+
+  while (!paso1) {
+    if (digitalRead(BUTTON_PIN) == LOW) {
+      inicio = millis();
+      while (digitalRead(BUTTON_PIN) == LOW) {
+        if (millis() - inicio >= 3000) {
+          paso1 = true;
+          break;
+        }
+        delay(50);
+      }
+      if (!paso1) { modoActual = MODO_ASISTENCIA; return; }
+    }
+    delay(50);
+  }
+
+  pantallaMsg("FORMATEAR?", "Manten 3s para", "ejecutar");
+  while (digitalRead(BUTTON_PIN) == LOW) delay(10);
+
+  while (!paso2) {
+    if (digitalRead(BUTTON_PIN) == LOW) {
+      inicio = millis();
+      while (digitalRead(BUTTON_PIN) == LOW) {
+        if (millis() - inicio >= 3000) {
+          paso2 = true;
+          break;
+        }
+        delay(50);
+      }
+      if (!paso2) { modoActual = MODO_ASISTENCIA; return; }
+    }
+    delay(50);
+  }
+
+  pantallaMsg("FORMATEANDO...", "", "No apagar");
+  delay(500);
+
+  finger.emptyDatabase();
+
+  if (SD.exists(ESTUDIANTES_CSV)) SD.remove(ESTUDIANTES_CSV);
+  if (SD.exists(ASIST_CSV)) SD.remove(ASIST_CSV);
+
+  File f = SD.open(ESTUDIANTES_CSV, FILE_WRITE);
+  if (f) { f.println("ID,Nombre,Apellido"); f.close(); }
+  f = SD.open(ASIST_CSV, FILE_WRITE);
+  if (f) { f.println(CSV_HEADER); f.close(); }
+
+  pantallaMsg("SISTEMA", "FORMATEADO", "Volviendo...");
+  beepExito();
+  delay(2000);
+
+  modoActual = MODO_ASISTENCIA;
 }
 
 void setup() {
@@ -212,8 +272,10 @@ void loop() {
     tomarAsistencia();
   } else if (modoActual == MODO_ENROLAMIENTO) {
     enrollarDedo();
-  } else {
+  } else if (modoActual == MODO_CORRECCION) {
     corregirDedo();
+  } else {
+    formatearSistema();
   }
 
   for (int i = 0; i < 10; i++) {

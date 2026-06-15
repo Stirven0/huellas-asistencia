@@ -17,6 +17,9 @@
 
 Adafruit_SSD1306 display(OLED_WIDTH, OLED_HEIGHT, &Wire, -1);
 unsigned long ultimoCmd = 0;
+unsigned long ultimoCheck = 0;
+bool sdOk = false;
+bool sdAntes = false;
 
 void oledMsg(const char* l1, const char* l2, const char* l3) {
   display.clearDisplay();
@@ -29,6 +32,12 @@ void oledMsg(const char* l1, const char* l2, const char* l3) {
   display.display();
 }
 
+bool checkSD() {
+  pinMode(SD_CS_PIN, OUTPUT);
+  digitalWrite(SD_CS_PIN, HIGH);
+  return SD.begin(SD_CS_PIN);
+}
+
 void setup() {
   Serial.begin(115200);
   delay(2000);
@@ -37,19 +46,18 @@ void setup() {
     while (1) delay(1);
   }
 
-  oledMsg("microSD", "Iniciando...", "");
+  sdOk = checkSD();
 
-  pinMode(SD_CS_PIN, OUTPUT);
-  digitalWrite(SD_CS_PIN, HIGH);
-
-  if (!SD.begin(SD_CS_PIN)) {
-    oledMsg("ERROR", "microSD no", "detectada");
-    Serial.println(F("[ERROR] SD no detectada"));
-    while (1) delay(1);
+  if (sdOk) {
+    oledMsg("microSD: OK", "Comandos:", "w r d i");
+    Serial.println(F("microSD OK. w r d i"));
+  } else {
+    oledMsg("microSD: NO", "Insertar tarjeta", "");
+    Serial.println(F("microSD no detectada"));
   }
 
-  oledMsg("microSD: OK", "Comandos:", "w r d i");
-  Serial.println(F("microSD OK. w=escribir r=leer d=borrar i=info"));
+  sdAntes = sdOk;
+  ultimoCheck = millis();
 
   delay(100);
   while (Serial.available()) Serial.read();
@@ -57,57 +65,82 @@ void setup() {
 }
 
 void loop() {
+  if (millis() - ultimoCheck > 1000) {
+    ultimoCheck = millis();
+    sdOk = checkSD();
+
+    if (sdOk && !sdAntes) {
+      oledMsg("microSD", "Insertada!", "w r d i");
+      Serial.println(F("SD INSERTADA"));
+    } else if (!sdOk && sdAntes) {
+      oledMsg("ALERTA", "microSD", "RETIRADA!");
+      Serial.println(F("SD RETIRADA!"));
+    }
+    sdAntes = sdOk;
+  }
+
   if (Serial.available() && millis() - ultimoCmd > 300) {
     char c = Serial.read();
     while (Serial.available()) Serial.read();
     ultimoCmd = millis();
 
-    switch (c) {
-      case 'w': escribir(); break;
-      case 'r': leer(); break;
-      case 'd': borrar(); break;
-      case 'i': info(); break;
+    if (!sdOk && c != 'i') {
+      Serial.println(F("SD no presente"));
+      return;
     }
-    oledMsg("microSD: OK", "Comandos:", "w r d i");
+
+    switch (c) {
+      case 'w': {
+        File f = SD.open(TEST_FILE, FILE_WRITE);
+        if (f) {
+          if (f.size() == 0) f.println("ID,Fecha,Hora");
+          f.println("1,2026-06-09,22:30:00");
+          f.close();
+          oledMsg("OK", "Escrito", "TEST.CSV");
+          Serial.println(F("[OK] Escrito"));
+        } else {
+          Serial.println(F("[ERR] No abrir"));
+        }
+        break;
+      }
+      case 'r': {
+        File f = SD.open(TEST_FILE);
+        if (f) {
+          Serial.println(F("--- TEST.CSV ---"));
+          while (f.available()) Serial.write(f.read());
+          Serial.println(F("--- FIN ---"));
+          f.close();
+          oledMsg("OK", "Leido", "TEST.CSV");
+        } else {
+          oledMsg("INFO", "TEST.CSV", "no existe");
+        }
+        break;
+      }
+      case 'd': {
+        if (SD.remove(TEST_FILE)) {
+          oledMsg("OK", "Borrado", "");
+          Serial.println(F("[OK] Borrado"));
+        } else {
+          oledMsg("ERROR", "No borrar", "");
+        }
+        break;
+      }
+      case 'i': {
+        char buf[22];
+        if (!sdOk) {
+          oledMsg("microSD", "NO PRESENTE", "");
+          break;
+        }
+        File r = SD.open("/");
+        int n = 0;
+        while (r.openNextFile()) { n++; r.close(); }
+        r.close();
+        snprintf(buf, sizeof(buf), "%d archivos", n);
+        oledMsg("Info", buf, "");
+        Serial.print(F("[INFO] ")); Serial.print(n); Serial.println(F(" archivos"));
+        break;
+      }
+    }
+    if (sdOk) oledMsg("microSD: OK", "Comandos:", "w r d i");
   }
-}
-
-void escribir() {
-  File f = SD.open(TEST_FILE, FILE_WRITE);
-  if (!f) { oledMsg("ERROR", "No abrir archivo", ""); return; }
-  if (f.size() == 0) f.println(F("ID,Fecha,Hora"));
-  f.println(F("1,2026-06-09,22:30:00"));
-  f.close();
-  oledMsg("OK", "Escrito en", "TEST.CSV");
-  Serial.println(F("[OK] Escrito"));
-}
-
-void leer() {
-  File f = SD.open(TEST_FILE);
-  if (!f) { oledMsg("INFO", "TEST.CSV", "no existe"); return; }
-  Serial.println(F("--- TEST.CSV ---"));
-  while (f.available()) Serial.write(f.read());
-  Serial.println(F("--- FIN ---"));
-  f.close();
-  oledMsg("OK", "Leido", "TEST.CSV");
-}
-
-void borrar() {
-  if (SD.remove(TEST_FILE)) {
-    oledMsg("OK", "Borrado", "");
-    Serial.println(F("[OK] Borrado"));
-  } else {
-    oledMsg("ERROR", "No borrar", "");
-  }
-}
-
-void info() {
-  File r = SD.open("/");
-  int n = 0;
-  while (r.openNextFile()) { n++; r.close(); }
-  r.close();
-  char buf[16];
-  snprintf(buf, sizeof(buf), "%d archivos", n);
-  oledMsg("Info", buf, "");
-  Serial.print(F("[INFO] ")); Serial.print(n); Serial.println(F(" archivos"));
 }

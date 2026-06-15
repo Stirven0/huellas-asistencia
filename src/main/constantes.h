@@ -34,5 +34,6 @@
 #define MODO_ASISTENCIA     0
 #define MODO_ENROLAMIENTO   1
 #define MODO_CORRECCION     2
+#define MODO_FORMATEAR      3
 
 #endif
