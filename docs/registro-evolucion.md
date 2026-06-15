@@ -116,6 +116,34 @@ MISO (pin 50) va **directo** sin divisor (la tarjeta ya manda 3.3V).
 
 ---
 
+## 2026-06-14 — Sesión Fase 2
+
+### Código de aplicación integrada ✅
+
+**Archivos creados:**
+
+| Archivo | Propósito |
+|---------|-----------|
+| `src/main/main.ino` | Loop principal con máquina de estados |
+| `src/main/constantes.h` | Pines, modos, límites |
+| `src/main/rtc_helper.h/.cpp` | Inicialización y timestamps |
+| `src/main/pantalla.h/.cpp` | OLED + buzzer + LED13 |
+| `src/main/almacenamiento.h/.cpp` | manejo de CSVs en microSD |
+| `src/main/enrolamiento.h/.cpp` | enrolamiento con verificación de duplicados |
+| `src/main/asistencia.h/.cpp` | asistencia y corrección |
+
+**Arquitectura de detección en cascada:**
+
+```
+LED13+buzzer → OLED → RTC → AS608 → microSD → SISTEMA LISTO
+```
+
+Cada periférico se verifica en orden; si falta, no avanza y reintenta cada 2s. Durante operación, se monitorean cada 3s. Si un periférico se desconecta, se alerta en OLED; si se reconecta, se recupera automáticamente.
+
+**Métricas:** Flash 13% (33KB), SRAM 25% (2KB) — dentro de límites.
+
+---
+
 ## Glosario de soluciones recurrentes
 
 ### Loopback Serial (afecta TODOS los tests)

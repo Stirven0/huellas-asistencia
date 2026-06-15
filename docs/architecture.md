@@ -1,12 +1,206 @@
 # Arquitectura Técnica
 
+## Mapa de estados
+
+```
+                    ╔══════════════════════╗
+                    ║     INICIO / RESET   ║
+                    ╚══════════════════════╝
+                             │
+                             ▼
+                    ╔══════════════════════╗
+                    ║  INICIALIZACIÓN      ║
+                    ║  OLED, RTC, AS608,   ║
+                    ║  microSD             ║
+                    ╚══════════════════════╝
+                             │
+                             ▼
+              ┌──────────────┴──────────────┐
+              │         IDLE                │
+              │  OLED: "Coloca el dedo"     │
+              └──────────────┬──────────────┘
+                             │
+                    ┌───────┴───────┐
+                    │   ¿Dedo puesto?│
+                    └───────┬───────┘
+                            │
+                      ┌─────┴─────┐
+                   NO │           │ SÍ
+                 ┌────┘           └────────────┐
+                 │                             │
+              IDLE                  ┌──────────┴──────────┐
+                                   │   fingerSearch()    │
+                                   │   → ID              │
+                                   └──────────┬──────────┘
+                                              │
+                                    ┌─────────┴─────────┐
+                                    │   ID ≠ 0?         │
+                                    └─────────┬─────────┘
+                                              │
+                              ┌───────────────┼───────────────┐
+                              │               │               │
+                         ┌────┴────┐    ┌─────┴─────┐   ┌────┴────┐
+                         │ ASIST.  │    │ ENROLAR   │   │CORREGIR │
+                         │(default)│    │ (botón x1) │   │(botón x2)│
+                         └────┬────┘    └─────┬─────┘   └────┬────┘
+                              │               │              │
+                         ┌────┴────┐    ┌─────┴─────┐   ┌────┴────┐
+                         │Buscar   │    │Verificar   │   │Mostrar  │
+                         │nombre en│    │duplicado   │   │ID+nombre│
+                         │ESTUD.CSV│    │(AS608)     │   │+botón   │
+                         └────┬────┘    └─────┬─────┘   └────┬────┘
+                              │               │              │
+                         ┌────┴────┐    ┌─────┴─────┐   ┌────┴────┐
+                         │Leer RTC │    │Enrolar    │   │¿Confirma?│
+                         └────┬────┘    │2 tomas     │   └────┬────┘
+                              │         └─────┬─────┘    NO  │  SÍ
+                         ┌────┴────┐         ┌───────┐   ┌───┴───┐
+                         │Verificar│         │Guardar│   │Borrar │
+                         │duplicado│         │modelo │   │template│
+                         │ASIST.CSV│         │AS608  │   │+re-enr│
+                         └────┬────┘         └───┬───┘   └───────┘
+                         ┌────┴────┐            │
+                      SÍ │         │ NO      ┌──┴───┐
+                    ┌────┘         └─────┐   │ OK!  │
+                    │                    │   │BEEP  │
+               ┌────┴────┐         ┌─────┴┐  │OLED ✓│
+               │RECHAZAR │         │GUARD │  └──────┘
+               │BEEP larg│         │CSV   │      │
+               │"Ya reg."│         │BEEP  │      │
+               └─────────┘         │corto │      │
+                                   └──────┘      │
+                                      │          │
+                                      └──────────┘
+                                         │
+                                     (vuelve a IDLE)
+
+      ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+
+      INTERRUPCIÓN POR BOTÓN (en cualquier estado)
+
+      [Pulsador] → digitalRead(BUTTON_PIN) == LOW
+              │
+              ▼
+      ┌─────────────────┐
+      │ Cambiar modo:   │
+      │ 0→ Asistencia   │
+      │ 1→ Enrolar      │
+      │ 2→ Corregir     │
+      └─────────────────┘
+              │
+              ▼
+           IDLE
+```
+
+## Flujo por modo
+
+### ASISTENCIA
+```
+IDLE → dedo → fingerSearch() → ID ≠ 0?
+  └─ NO → "No reconocido", BEEP largo → IDLE
+  └─ SÍ → buscarNombre(ID) en ESTUDIANTES.CSV
+       └─ leer RTC (fecha + hora)
+            └─ verificar duplicado en ASIST.CSV (ID + fecha)
+                 ├─ existe → "Ya registrado hoy", BEEP largo → IDLE
+                 └─ no existe → append "ID,Fecha,Hora" → "OK {Nombre}", BEEP corto → IDLE
+```
+
+### ENROLAR
+```
+IDLE → dedo → fingerSearch() → ID ≠ 0?
+  └─ NO → es huella nueva → continuar
+  └─ SÍ → "Esta huella ya es ID {N}" → IDLE (rechazar)
+
+Capturar imagen 1 → "Retira dedo"
+Capturar imagen 2 → finger.createModel()
+  └─ falla → "No coinciden", BEEP largo → IDLE
+
+fingerSearch() (verificar duplicado otra vez)
+  └─ SÍ match → "Esta huella ya existe" → IDLE
+
+Buscar primer ID sin enrolar en AS608:
+  └─ finger.storeModel(ID_libre) → BEEP corto → "ID {N} enrolado" → IDLE
+```
+
+### CORREGIR
+```
+IDLE → dedo → fingerSearch() → mostrar ID + nombre
+  └─ Admin presiona pulsador para confirmar
+       └─ finger.deleteModel(ID) → BEEP
+            └─ "Coloca dedo correcto"
+                 └─ capturar 2 tomas → fingerSearch() (dup check)
+                      └─ finger.storeModel(ID) → "Corregido" → IDLE
+```
+
+## Detección en cascada de periféricos
+
+El sistema inicia verificando cada periférico en orden. Si uno falla, no avanza al siguiente:
+
+```
+INICIO
+  │
+  ▼
+┌──────────────────────────────────────────────┐
+│ 1. OLED SSD1306                              │
+│    └─ ¿Existe en I2C (0x3C)?                 │
+│         ├─ NO → LED13 ON + Buzzer 200ms ×2   │
+│         │      └─ reintentar cada 2s          │
+│         └─ SÍ → mostrar "Iniciando..."        │
+└──────────────────────────────────────────────┘
+  │
+  ▼
+┌──────────────────────────────────────────────┐
+│ 2. RTC DS3231                                │
+│    └─ ¿Existe en I2C (0x68)?                 │
+│         ├─ NO → OLED: "RTC no detectado"     │
+│         │      └─ reintentar cada 2s          │
+│         └─ SÍ → sincronizar hora             │
+└──────────────────────────────────────────────┘
+  │
+  ▼
+┌──────────────────────────────────────────────┐
+│ 3. AS608 (huellas)                           │
+│    └─ finger.verifyPassword()?               │
+│         ├─ NO → OLED: "AS608 no detectado"   │
+│         │      └─ reintentar cada 2s          │
+│         └─ SÍ → iniciar UART                 │
+└──────────────────────────────────────────────┘
+  │
+  ▼
+┌──────────────────────────────────────────────┐
+│ 4. microSD                                   │
+│    └─ SD.begin(CS=53)?                       │
+│         ├─ NO → OLED: "Insertar tarjeta"     │
+│         │      └─ reintentar cada 2s          │
+│         └─ SÍ → abrir ESTUDIANTES.CSV        │
+└──────────────────────────────────────────────┘
+  │
+  ▼
+╔══════════════════════════════════════════════╗
+║           SISTEMA LISTO                      ║
+║  OLED: "SISTEMA LISTO - Pulsador:cambia modo"║
+╚══════════════════════════════════════════════╝
+```
+
+### Monitoreo continuo (cada 3 segundos en loop)
+
+Durante la operación normal, el sistema verifica periódicamente:
+
+| Periférico | Método | Si falla |
+|------------|--------|----------|
+| **microSD** | `SD.open("/")` → root existente? | OLED: "microSD perdida - No registrar" |
+| **RTC** | `Wire.beginTransmission(0x68)` | OLED: "RTC perdido - Revisar" |
+| **AS608** | `finger.verifyPassword()` | OLED: "AS608 perdido - Revisar cable" |
+
+Si un periférico se recupera (reinsertado / reconectado), el sistema lo detecta en la siguiente verificación y muestra "Recuperado" en OLED.
+
 ## Diagrama de flujo principal
 
 ```
-[Usuario]
+[Usuario: coloca dedo]
     │
     ▼
-[AS608 — Extracción de minutiae]
+[AS608 — Capturar minutiae]
     │
     ▼
 [Arduino Mega 2560 — Procesamiento central]
@@ -40,10 +234,10 @@ main.ino
     │   └── almacenamiento.cpp  # initSD(), writeRecord(), readCSV()
     ├── display/
     │   ├── pantalla.h
-    │   └── pantalla.cpp        # showMessage(), showSuccess(), showError()
+    │   └── pantalla.cpp        # showMessage(), beepExito(), beepError()
     └── utils/
         ├── constantes.h        # Pines, timeouts, límites
-        └── rtc_helper.cpp      # getTimestamp(), syncRTC()
+        └── rtc_helper.h/.cpp   # getTimestamp(), syncRTC()
 ```
 
 ## Mapa de memoria estimado (ATmega2560)
