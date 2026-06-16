@@ -1,6 +1,6 @@
 #include "enrolamiento.h"
 #include "constantes.h"
-#include "buzzer.h"
+#include "notificador.h"
 #include "pantalla.h"
 #include "almacenamiento.h"
 
@@ -62,7 +62,7 @@ bool huellaYaExiste(uint8_t* idExistente) {
 void enrollarDedo() {
   if (!as608Ok) {
     pantallaMsg("ERROR", "AS608 no", "disponible");
-    beepError();
+    notificarError();
     return;
   }
 
@@ -75,7 +75,7 @@ void enrollarDedo() {
     else
       snprintf(msg, sizeof(msg), "Ya es ID %d", idExistente);
     pantallaMsg("DUPLICADO", msg, "");
-    beepError();
+    notificarError();
     delay(2000);
     return;
   }
@@ -84,10 +84,10 @@ void enrollarDedo() {
   if (!esperarDedo()) return;
 
   uint8_t p = finger.getImage();
-  if (p != FINGERPRINT_OK) { beepError(); return; }
+  if (p != FINGERPRINT_OK) { notificarError(); return; }
 
   p = finger.image2Tz(1);
-  if (p != FINGERPRINT_OK) { beepError(); return; }
+  if (p != FINGERPRINT_OK) { notificarError(); return; }
 
   pantallaMsg("ENROLAR", "Retira dedo", "");
   if (!esperarSinDedo()) return;
@@ -96,21 +96,21 @@ void enrollarDedo() {
   if (!esperarDedo()) return;
 
   p = finger.getImage();
-  if (p != FINGERPRINT_OK) { beepError(); return; }
+  if (p != FINGERPRINT_OK) { notificarError(); return; }
 
   p = finger.image2Tz(2);
-  if (p != FINGERPRINT_OK) { beepError(); return; }
+  if (p != FINGERPRINT_OK) { notificarError(); return; }
 
   p = finger.createModel();
   if (p != FINGERPRINT_OK) {
     pantallaMsg("ENROLAR", "No coinciden", "");
-    beepError();
+    notificarError();
     return;
   }
 
   if (huellaYaExiste(&idExistente)) {
     pantallaMsg("DUPLICADO", "Ya existe en BD", "");
-    beepError();
+    notificarError();
     return;
   }
 
@@ -122,10 +122,10 @@ void enrollarDedo() {
     char msg[MSG_MAX];
     snprintf(msg, sizeof(msg), "ID %d OK", id);
     pantallaMsg("ENROLAR", msg, "");
-    beepExito();
+    notificarOk();
   } else {
     pantallaMsg("ENROLAR", "Error guardar", "");
-    beepError();
+    notificarError();
   }
 }
 

@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "modos.h"
 #include "constantes.h"
-#include "buzzer.h"
+#include "notificador.h"
 #include "pantalla.h"
 #include "asistencia.h"
 #include "enrolamiento.h"
@@ -29,7 +29,7 @@ void ejecutarModo(uint8_t modo) {
 void cambiarModo(uint8_t* modoActual) {
   *modoActual = (*modoActual + 1) % MODOS_COUNT;
   pantallaMsg("MODO:", NOMBRES_MODO[*modoActual], "Coloca el dedo");
-  beepExito();
+  notificarOk();
   delay(1500);
   while (digitalRead(BUTTON_PIN) == LOW) delay(10);
 }

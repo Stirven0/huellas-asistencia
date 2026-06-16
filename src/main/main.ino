@@ -17,7 +17,7 @@
  */
 
 #include "constantes.h"
-#include "buzzer.h"
+#include "notificador.h"
 #include "pantalla.h"
 #include "rtc_helper.h"
 #include "almacenamiento.h"
@@ -44,38 +44,32 @@ static Periferico perifericos[PERIF_COUNT];
 void detectarPerifericos() {
   while (true) {
     if (pantallaInit()) break;
-    alertaDoble();
+    notificarAlerta();
     delay(2000);
   }
 
   while (true) {
     if (rtcInit()) break;
-    digitalWrite(LED_BUILTIN, HIGH);
     pantallaMsg("RTC", "No detectado", "Revisar conexion I2C");
-    beepError();
-    digitalWrite(LED_BUILTIN, LOW);
+    notificarError();
     delay(2000);
   }
 
   while (true) {
     if (as608Init()) break;
     if (pantallaPresente()) {
-      digitalWrite(LED_BUILTIN, HIGH);
       pantallaMsg("AS608", "No detectado", "Verificar cable UART");
-      beepError();
-      digitalWrite(LED_BUILTIN, LOW);
+      notificarError();
     } else {
-      alertaDoble();
+      notificarAlerta();
     }
     delay(2000);
   }
 
   while (true) {
     if (initSD()) break;
-    digitalWrite(LED_BUILTIN, HIGH);
     pantallaMsg("microSD", "No detectada", "Insertar tarjeta SPI");
-    beepError();
-    digitalWrite(LED_BUILTIN, LOW);
+    notificarError();
     delay(2000);
   }
 }
@@ -89,9 +83,7 @@ void revisarBoton() {
 
 void mostrarRecuperacion(const char* nombre, const char* mensaje) {
   if (!oledAlerta) {
-    digitalWrite(LED_BUILTIN, HIGH);
-    beepExito();
-    digitalWrite(LED_BUILTIN, LOW);
+    notificarOk();
     pantallaMsg(nombre, mensaje, "");
     delay(1000);
   }
@@ -143,7 +135,7 @@ void formatearSistema() {
   formatearCSVs();
 
   pantallaMsg("SISTEMA", "FORMATEADO", "Volviendo...");
-  beepExito();
+  notificarOk();
   delay(2000);
 
   modoActual = MODO_ASISTENCIA;
@@ -161,7 +153,7 @@ void setup() {
   detectarPerifericos();
 
   pantallaMsg("SISTEMA LISTO", "Pulsador:", "cambia modo");
-  beepExito();
+  notificarOk();
   delay(1500);
 
   while (Serial.available()) Serial.read();
@@ -185,7 +177,7 @@ void loop() {
       if (verificarPeriferico(&perifericos[i])) {
         if (i == 0) {
           pantallaMsg(nombres[i], recuperados[i], "");
-          beepExito();
+          notificarOk();
           delay(1000);
         } else {
           mostrarRecuperacion(nombres[i], recuperados[i]);
@@ -195,34 +187,28 @@ void loop() {
   }
 
   if (oledAlerta) {
-    alertaDoble();
+    notificarAlerta();
     delay(300);
     return;
   }
 
   if (sdAlerta) {
-    digitalWrite(LED_BUILTIN, HIGH);
     pantallaMsg("microSD", "Perdida", "Insertar tarjeta");
-    beepError();
-    digitalWrite(LED_BUILTIN, LOW);
+    notificarError();
     delay(300);
     return;
   }
 
   if (rtcAlerta) {
-    digitalWrite(LED_BUILTIN, HIGH);
     pantallaMsg("RTC", "Perdido", "Revisar conexion I2C");
-    beepError();
-    digitalWrite(LED_BUILTIN, LOW);
+    notificarError();
     delay(300);
     return;
   }
 
   if (as608Alerta) {
-    digitalWrite(LED_BUILTIN, HIGH);
     pantallaMsg("AS608", "Perdido", "Verificar cable UART");
-    beepError();
-    digitalWrite(LED_BUILTIN, LOW);
+    notificarError();
     delay(300);
     return;
   }

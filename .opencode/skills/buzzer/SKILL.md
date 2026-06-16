@@ -1,71 +1,46 @@
 ---
 name: buzzer
-description: Use when writing code for the active buzzer on Pin 8. Covers success/error tones, beep patterns, and non-blocking timing.
+description: Use when writing code for the active buzzer on Pin 12. Covers success/error tones, beep patterns, and non-blocking timing.
 ---
 
-# Buzzer — Retroalimentación Sonora
+# Buzzer — Retroalimentación Sonora (integrada en `notificador`)
 
 ## Hardware
 
 - **Type:** Active buzzer (generates tone when powered — no PWM needed)
-- **Pin:** Digital Pin 8 (`BUZZER_PIN` in constantes.h)
+- **Pin:** Digital Pin 12 (`BUZZER_PIN` in `constantes.h`)
+- **LED13** (`LED_BUILTIN`) se activa simultáneamente con el buzzer
 - **Logic:** `HIGH` = sound ON, `LOW` = sound OFF
 
 ## Pin connection
 
 | Mega pin | Buzzer pin |
 |----------|------------|
-| 8        | Signal     |
+| 12       | Signal     |
 | 5V       | VCC        |
 | GND      | GND        |
 
-## Common patterns
+## Notifications (use `notificador.h`)
 
-### Success beep (short)
+Todas las notificaciones controlan LED13 + buzzer como una unidad.
+
+### Éxito
 ```cpp
-#include "src/utils/constantes.h"
+#include "notificador.h"
 
-void beepSuccess() {
-  digitalWrite(BUZZER_PIN, HIGH);
-  delay(BUZZER_SHORT);   // 100ms
-  digitalWrite(BUZZER_PIN, LOW);
-}
+notificarOk();   // 100ms beep + blink
 ```
 
-### Error beep (long)
+### Error
 ```cpp
-void beepError() {
-  digitalWrite(BUZZER_PIN, HIGH);
-  delay(BUZZER_LONG);    // 500ms
-  digitalWrite(BUZZER_PIN, LOW);
-}
+notificarError();  // 500ms beep + blink
 ```
 
-### Non-blocking beep (using millis)
+### Alerta (OLED no disponible — doble pulso)
 ```cpp
-bool buzzerActive = false;
-unsigned long buzzerEndTime = 0;
-
-void buzzerNonBlocking(bool on, unsigned long duration) {
-  if (on && !buzzerActive) {
-    digitalWrite(BUZZER_PIN, HIGH);
-    buzzerActive = true;
-    buzzerEndTime = millis() + duration;
-  }
-  if (buzzerActive && millis() >= buzzerEndTime) {
-    digitalWrite(BUZZER_PIN, LOW);
-    buzzerActive = false;
-  }
-}
+notificarAlerta();  // 2× 200ms pulse + blink
 ```
-
-## Important notes
-
-- **Active buzzer:** does not require PWM or `tone()`. Simple `digitalWrite` is sufficient.
-- **No `delay()` in sensor loops** — use the `millis()` pattern above if the buzzer runs concurrently with sensor reads.
-- `BUZZER_SHORT` (100ms) = success indication.
-- `BUZZER_LONG` (500ms) = error indication.
 
 ## Constants reference
 
-See `src/utils/constantes.h`: `BUZZER_PIN`, `BUZZER_SHORT`, `BUZZER_LONG`.
+See `src/main/constantes.h`: `BUZZER_PIN`, `BUZZER_SHORT` (100ms), `BUZZER_LONG` (500ms), `BUZZER_DOUBLE` (200ms).

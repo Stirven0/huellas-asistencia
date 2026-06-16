@@ -3,9 +3,8 @@
 ## Principios SOLID (adaptados para AVR)
 
 ### S — Single Responsibility Principle
-- Un archivo `.cpp` = una responsabilidad. Ej: `buzzer` solo controla sonido/LED13, `pantalla` solo OLED.
-- EXCEPCIÓN: `alertaDoble()` en buzzer controla LED13 + buzzer porque es la "notificación de pánico" cuando OLED falló.
-- NO crear funciones wrapper que mezclen responsabilidades de forma genérica. Si se necesita coordinar múltiples periféricos, hacerlo directamente en `main.ino` con `digitalWrite()` simple.
+- Un archivo `.cpp` = una responsabilidad. Ej: `notificador` unifica notificaciones LED13 + buzzer, `pantalla` solo OLED.
+- `notificador` es la EXCEPCIÓN deliberada: todas las notificaciones llevan LED13 + buzzer (el usuario necesita ambas señales).
 
 ### O — Open/Closed Principle
 - Nuevos modos: agregar handler en `HANDLERS_MODO[]` y nombre en `NOMBRES_MODO[]`. No modificar `ejecutarModo()`.
@@ -45,10 +44,8 @@
 - `snprintf(dest, sizeof(dest), ...)` siempre.
 
 ### Errores de Periféricos
-- En `detectarPerifericos()` (cascada de inicio): `digitalWrite(LED_BUILTIN, HIGH)` → `pantallaMsg()` + `beepError()` → `digitalWrite(LED_BUILTIN, LOW)`. Si OLED falló: `alertaDoble()`.
-- En `loop()` (monitoreo continuo): mismo patrón.
-- `alertaDoble()` es solo para cuando OLED no está disponible — controla LED13 + buzzer internamente.
-- No crear funciones helper que envuelvan display+buzzer+LED. Hacerlo inline en `main.ino` con `digitalWrite()` directo.
+- En `detectarPerifericos()` (cascada de inicio) y `loop()` (monitoreo): `pantallaMsg()` + `notificarError()`. Si OLED falló: `notificarAlerta()`.
+- No agregar `digitalWrite(LED_BUILTIN)` alrededor de notificaciones — `notificador` lo maneja internamente.
 
 ### Mensajes en OLED
 - `pantallaMsg(header, línea2, línea3)`
@@ -80,7 +77,7 @@
 src/main/
   ├── main.ino          # Setup, loop, button, format mode, peripheral cascade + monitoring
   ├── constantes.h      # All #defines (pins, sizes, mode numbers, CSV names)
-  ├── buzzer.cpp/.h     # Sound + LED13 last-resort (alertaDoble)
+  ├── notificador.cpp/.h  # LED13 + buzzer unified (notificarOk, notificarError, notificarAlerta)
   ├── pantalla.cpp/.h   # OLED init + text display
   ├── rtc_helper.cpp/.h # DS3231 init + timestamp
   ├── almacenamiento.cpp/.h  # microSD init + CSV R/W
@@ -98,5 +95,5 @@ src/main/
 ### Consistencia entre Mensajes
 - `pantallaMsg(l1, l2, l3)` donde l1 es el contexto en MAYÚSCULAS
 - NO usar headers inventados como `"DUP DOBLADO"` o `"DUP ENROL"` — usar `"DUPLICADO"` o el nombre del modo
-- `beepExito()` después de operación exitosa, `beepError()` después de fallo
-- LED13 se enciende durante la notificación de error y se apaga después
+- `notificarOk()` después de operación exitosa, `notificarError()` después de fallo, `notificarAlerta()` cuando OLED no disponible
+- Notificador controla LED13 + buzzer siempre — no hacer `digitalWrite(LED_BUILTIN)` alrededor de estas llamadas

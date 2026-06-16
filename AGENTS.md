@@ -67,9 +67,9 @@ Peripheral health uses a function-pointer struct array (`verificador.h`), modes 
 | `almacenamiento.cpp/h` | microSD init, CSV read/write, duplicate check, `formatearCSVs()` |
 | `asistencia.cpp/h` | Attendance and correction flow |
 | `enrolamiento.cpp/h` | AS608 init, `capturarHuella()`, enrollment, template delete, `limpiarHuellas()` |
-| `pantalla.cpp/h` | OLED display only (buzzer extracted to `buzzer`) |
+| `pantalla.cpp/h` | OLED display only |
 | `rtc_helper.cpp/h` | DS3231 init, `obtenerFechaHora()` via `snprintf` |
-| `buzzer.cpp/h` | Buzzer beep patterns (`beepExito`, `beepError`, `alertaDoble`) |
+| `notificador.cpp/h` | LED13 + buzzer unified notifications (`notificarOk`, `notificarError`, `notificarAlerta`) |
 | `verificador.cpp/h` | `Periferico` struct + `verificarPeriferico()`, replaces 4× duplicate health checks |
 | `modos.cpp/h` | Mode handler array, `NOMBRES_MODO[]`, `ejecutarModo()`, `cambiarModo()` |
 | `constantes.h` | All pin defines, CSV filenames, mode constants, buffer sizes (`FECHA_MAX`, `HORA_MAX`, `MSG_MAX`) |

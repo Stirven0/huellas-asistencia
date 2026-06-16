@@ -1,20 +1,24 @@
 #include <Arduino.h>
-#include "buzzer.h"
+#include "notificador.h"
 #include "constantes.h"
 
-void beepExito() {
+void notificarOk() {
+  digitalWrite(LED_BUILTIN, HIGH);
   digitalWrite(BUZZER_PIN, HIGH);
   delay(BUZZER_SHORT);
+  digitalWrite(LED_BUILTIN, LOW);
   digitalWrite(BUZZER_PIN, LOW);
 }
 
-void beepError() {
+void notificarError() {
+  digitalWrite(LED_BUILTIN, HIGH);
   digitalWrite(BUZZER_PIN, HIGH);
   delay(BUZZER_LONG);
+  digitalWrite(LED_BUILTIN, LOW);
   digitalWrite(BUZZER_PIN, LOW);
 }
 
-void alertaDoble() {
+void notificarAlerta() {
   for (int i = 0; i < 2; i++) {
     digitalWrite(LED_BUILTIN, HIGH);
     digitalWrite(BUZZER_PIN, HIGH);

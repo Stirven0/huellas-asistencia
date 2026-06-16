@@ -1,6 +1,6 @@
 #include "asistencia.h"
 #include "constantes.h"
-#include "buzzer.h"
+#include "notificador.h"
 #include "pantalla.h"
 #include "enrolamiento.h"
 #include "almacenamiento.h"
@@ -14,7 +14,7 @@ void tomarAsistencia() {
   uint8_t id;
   if (!capturarHuella(&id)) {
     pantallaMsg("ASISTENCIA", "No reconocido", "");
-    beepError();
+    notificarError();
     return;
   }
   char nombre[NOMBRE_MAX];
@@ -28,16 +28,16 @@ void tomarAsistencia() {
 
   if (esDuplicado(id, fecha)) {
     pantallaMsg(nombre, "Ya registrado", "hoy");
-    beepError();
+    notificarError();
     return;
   }
 
   if (registrarAsistencia(id, fecha, hora)) {
     pantallaMsg(nombre, "Asistencia OK", hora);
-    beepExito();
+    notificarOk();
   } else {
     pantallaMsg("ERROR", "No guardar", "ASIST.CSV");
-    beepError();
+    notificarError();
   }
 }
 
@@ -49,7 +49,7 @@ void corregirDedo() {
   uint8_t id;
   if (!capturarHuella(&id)) {
     pantallaMsg("CORREGIR", "No reconocido", "");
-    beepError();
+    notificarError();
     return;
   }
   char nombre[NOMBRE_MAX];
@@ -71,12 +71,12 @@ void corregirDedo() {
 
       if (!borrarTemplate(id)) {
         pantallaMsg("CORREGIR", "Error borrar", "");
-        beepError();
+        notificarError();
         return;
       }
 
       pantallaMsg("CORREGIR", "Template borrado", "Nuevo dedo...");
-      beepExito();
+      notificarOk();
       delay(1000);
 
       enrollarDedo();
