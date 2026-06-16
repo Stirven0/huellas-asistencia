@@ -62,17 +62,18 @@ bool huellaYaExiste(uint8_t* idExistente) {
 void enrollarDedoEnId(uint8_t id, const char* nombre) {
   uint8_t idExistente;
   if (huellaYaExiste(&idExistente)) {
-    char msg[MSG_MAX];
     char nombreExistente[NOMBRE_MAX];
+    char linea3[MSG_MAX];
     if (buscarNombre(idExistente, nombreExistente))
-      snprintf(msg, sizeof(msg), "Ya es %s", nombreExistente);
+      snprintf(linea3, sizeof(linea3), "como %s", nombreExistente);
     else
-      snprintf(msg, sizeof(msg), "Ya es ID %d", idExistente);
-    pantallaMsg(nombre, "Huella duplicada", msg);
+      snprintf(linea3, sizeof(linea3), "como ID %d", idExistente);
+    pantallaMsg(nombre, "Huella ya existe", linea3);
     notificarError();
     return;
   }
 
+  // mostrar nombre del estudiante solo si ya hay dedo puesto
   pantallaMsg(nombre, "Dedo 1 de 2", "");
   if (!esperarDedo()) return;
 
