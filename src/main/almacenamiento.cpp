@@ -10,7 +10,7 @@ bool initSD() {
 
   if (!SD.exists(ESTUDIANTES_CSV)) {
     File f = SD.open(ESTUDIANTES_CSV, FILE_WRITE);
-    if (f) { f.println("ID,Nombre,Apellido"); f.close(); }
+    if (f) { f.println(ESTUDIANTES_HEADER); f.close(); }
   }
   if (!SD.exists(ASIST_CSV)) {
     File f = SD.open(ASIST_CSV, FILE_WRITE);

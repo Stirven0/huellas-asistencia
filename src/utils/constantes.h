@@ -45,11 +45,13 @@
 #define BUZZER_LONG         500   // ms tono largo (error)
 
 // ============================================================
-// ARCHIVO CSV
+// ARCHIVOS CSV
 // ============================================================
 
-#define CSV_FILENAME    "ASIST.CSV"
-#define CSV_HEADER      "ID,Fecha,Hora"
+#define ESTUDIANTES_CSV  "ALUMNOS.CSV"
+#define ESTUDIANTES_HEADER "ID,Nombre,Apellido"
+#define ASIST_CSV        "ASIST.CSV"
+#define CSV_HEADER       "ID,Fecha,Hora"
 
 // ============================================================
 // MODOS DE OPERACIÓN

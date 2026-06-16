@@ -52,8 +52,8 @@
 ## Constants & CSV format
 
 - **Active constants (source of truth):** `src/main/constantes.h`
-- **Stale file:** `src/utils/constantes.h` — missing modes 2-3 and `ESTUDIANTES_CSV`
-- **CSV:** `ASIST.CSV` header `ID,Fecha,Hora`; `ESTUDIANTES.CSV` header `ID,Nombre,Apellido`
+- **Stale file:** `src/utils/constantes.h` — missing modes 2-3 and `ALUMNOS.CSV`
+- **CSV:** `ASIST.CSV` header `ID,Fecha,Hora`; `ALUMNOS.CSV` header `ID,Nombre,Apellido`
 - No spaces, no BOM, ASCII
 
 ## Active codebase layout

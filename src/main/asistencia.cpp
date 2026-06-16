@@ -43,7 +43,7 @@ void tomarAsistencia() {
     pantallaMsg(nombre, "Asistencia", "registrada");
     notificarOk();
   } else {
-    pantallaMsg("ERROR", "No guardar", "ASIST.CSV");
+    pantallaMsg("ERROR", "No guardar", ASIST_CSV);
     notificarError();
   }
 }

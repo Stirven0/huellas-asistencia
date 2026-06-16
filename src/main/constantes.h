@@ -33,9 +33,10 @@
 #define BOTON_COOLDOWN_MS   300
 
 // ARCHIVOS CSV
-#define ESTUDIANTES_CSV  "ESTUDIANTES.CSV"
+#define ESTUDIANTES_CSV  "ALUMNOS.CSV"
 #define ASIST_CSV        "ASIST.CSV"
-#define CSV_HEADER       "ID,Fecha,Hora"
+#define ESTUDIANTES_HEADER "ID,Nombre,Apellido"
+#define CSV_HEADER         "ID,Fecha,Hora"
 
 // MODOS DE OPERACION
 #define MODO_ASISTENCIA     0
