@@ -27,13 +27,13 @@ void tomarAsistencia() {
   obtenerFechaHora(fecha, hora);
 
   if (esDuplicado(id, fecha)) {
-    pantallaMsg(nombre, "Ya registrado", "hoy");
+    pantallaMsg(nombre, "Ya registraste", "hoy");
     notificarError();
     return;
   }
 
   if (registrarAsistencia(id, fecha, hora)) {
-    pantallaMsg(nombre, "Asistencia OK", hora);
+    pantallaMsg(nombre, "Asistencia", "registrada");
     notificarOk();
   } else {
     pantallaMsg("ERROR", "No guardar", "ASIST.CSV");
@@ -79,7 +79,7 @@ void corregirDedo() {
       notificarOk();
       delay(1000);
 
-      enrollarDedo();
+      enrollarDedoEnId(id, nombre);
 
       pantallaMsg("CORREGIR", "Completado", "");
       delay(1000);

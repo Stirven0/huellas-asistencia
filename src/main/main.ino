@@ -50,8 +50,12 @@ void detectarPerifericos() {
 
   while (true) {
     if (rtcInit()) break;
-    pantallaMsg("RTC", "No detectado", "Revisar conexion I2C");
-    notificarError();
+    if (pantallaPresente()) {
+      pantallaMsg("RTC", "No detectado", "Revisar conexion I2C");
+      notificarError();
+    } else {
+      notificarAlerta();
+    }
     delay(2000);
   }
 
@@ -68,8 +72,12 @@ void detectarPerifericos() {
 
   while (true) {
     if (initSD()) break;
-    pantallaMsg("microSD", "No detectada", "Insertar tarjeta SPI");
-    notificarError();
+    if (pantallaPresente()) {
+      pantallaMsg("microSD", "No detectada", "Insertar tarjeta");
+      notificarError();
+    } else {
+      notificarAlerta();
+    }
     delay(2000);
   }
 }

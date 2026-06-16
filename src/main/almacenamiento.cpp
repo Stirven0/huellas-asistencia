@@ -1,5 +1,6 @@
 #include "almacenamiento.h"
 #include "constantes.h"
+#include "enrolamiento.h"
 
 static bool sdOk = false;
 
@@ -90,4 +91,36 @@ bool formatearCSVs() {
   f = SD.open(ASIST_CSV, FILE_WRITE);
   if (f) { f.println(CSV_HEADER); f.close(); }
   return true;
+}
+
+bool buscarSinHuella(uint8_t* idOut, char* nombreOut) {
+  if (!sdOk) return false;
+  File f = SD.open(ESTUDIANTES_CSV);
+  if (!f) return false;
+
+  char buf[LINEA_MAX];
+  f.readBytesUntil('\n', buf, sizeof(buf));
+
+  while (f.available()) {
+    int len = f.readBytesUntil('\n', buf, sizeof(buf));
+    buf[len] = '\0';
+    if (len == 0) continue;
+
+    uint8_t id = atoi(buf);
+    if (finger.loadModel(id) != FINGERPRINT_OK) {
+      char* coma = strchr(buf, ',');
+      if (coma) {
+        coma++;
+        char* coma2 = strchr(coma, ',');
+        if (coma2) *coma2 = '\0';
+        strncpy(nombreOut, coma, NOMBRE_MAX - 1);
+        nombreOut[NOMBRE_MAX - 1] = '\0';
+      }
+      *idOut = id;
+      f.close();
+      return true;
+    }
+  }
+  f.close();
+  return false;
 }

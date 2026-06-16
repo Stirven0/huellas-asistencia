@@ -12,6 +12,7 @@ bool esperarDedo();
 bool esperarSinDedo();
 bool capturarHuella(uint8_t* idOut);
 void enrollarDedo();
+void enrollarDedoEnId(uint8_t id, const char* nombre);
 bool borrarTemplate(uint8_t id);
 bool huellaYaExiste(uint8_t* idExistente);
 bool limpiarHuellas();

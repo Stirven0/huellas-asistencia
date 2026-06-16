@@ -59,28 +59,21 @@ bool huellaYaExiste(uint8_t* idExistente) {
   return capturarHuella(idExistente);
 }
 
-void enrollarDedo() {
-  if (!as608Ok) {
-    pantallaMsg("ERROR", "AS608 no", "disponible");
-    notificarError();
-    return;
-  }
-
+void enrollarDedoEnId(uint8_t id, const char* nombre) {
   uint8_t idExistente;
   if (huellaYaExiste(&idExistente)) {
-    char nombre[NOMBRE_MAX];
     char msg[MSG_MAX];
-    if (buscarNombre(idExistente, nombre))
-      snprintf(msg, sizeof(msg), "Ya es ID %d: %s", idExistente, nombre);
+    char nombreExistente[NOMBRE_MAX];
+    if (buscarNombre(idExistente, nombreExistente))
+      snprintf(msg, sizeof(msg), "Ya es %s", nombreExistente);
     else
       snprintf(msg, sizeof(msg), "Ya es ID %d", idExistente);
-    pantallaMsg("DUPLICADO", msg, "");
+    pantallaMsg(nombre, "Huella duplicada", msg);
     notificarError();
-    delay(2000);
     return;
   }
 
-  pantallaMsg("ENROLAR", "Dedo 1 de 2", "");
+  pantallaMsg(nombre, "Dedo 1 de 2", "");
   if (!esperarDedo()) return;
 
   uint8_t p = finger.getImage();
@@ -89,10 +82,10 @@ void enrollarDedo() {
   p = finger.image2Tz(1);
   if (p != FINGERPRINT_OK) { notificarError(); return; }
 
-  pantallaMsg("ENROLAR", "Retira dedo", "");
+  pantallaMsg(nombre, "Retira dedo", "");
   if (!esperarSinDedo()) return;
 
-  pantallaMsg("ENROLAR", "Dedo 2 de 2", "");
+  pantallaMsg(nombre, "Dedo 2 de 2", "");
   if (!esperarDedo()) return;
 
   p = finger.getImage();
@@ -103,30 +96,57 @@ void enrollarDedo() {
 
   p = finger.createModel();
   if (p != FINGERPRINT_OK) {
-    pantallaMsg("ENROLAR", "No coinciden", "");
+    pantallaMsg(nombre, "No coinciden", "");
     notificarError();
     return;
   }
 
   if (huellaYaExiste(&idExistente)) {
-    pantallaMsg("DUPLICADO", "Ya existe en BD", "");
+    pantallaMsg("ENROLAR", "Ya existe en BD", "");
     notificarError();
     return;
   }
 
-  finger.getTemplateCount();
-  uint8_t id = finger.templateCount + 1;
+  if (finger.loadModel(id) == FINGERPRINT_OK) {
+    pantallaMsg("ENROLAR", "ID ocupado", "Reintentar");
+    notificarError();
+    return;
+  }
 
   p = finger.storeModel(id);
   if (p == FINGERPRINT_OK) {
     char msg[MSG_MAX];
     snprintf(msg, sizeof(msg), "ID %d OK", id);
-    pantallaMsg("ENROLAR", msg, "");
+    pantallaMsg(nombre, "Enrolado OK", msg);
     notificarOk();
   } else {
-    pantallaMsg("ENROLAR", "Error guardar", "");
+    pantallaMsg(nombre, "Error guardar", "");
     notificarError();
   }
+}
+
+void enrollarDedo() {
+  if (!as608Ok) {
+    pantallaMsg("ERROR", "AS608 no", "disponible");
+    notificarError();
+    return;
+  }
+
+  uint8_t id;
+  char nombre[NOMBRE_MAX];
+  if (!buscarSinHuella(&id, nombre)) {
+    pantallaMsg("ENROLAR", "Todos los", "estudiantes OK");
+    notificarError();
+    return;
+  }
+
+  char msg[MSG_MAX];
+  snprintf(msg, sizeof(msg), "ID %d", id);
+  pantallaMsg("Enrolar a:", nombre, msg);
+  notificarOk();
+  delay(2000);
+
+  enrollarDedoEnId(id, nombre);
 }
 
 bool borrarTemplate(uint8_t id) {
