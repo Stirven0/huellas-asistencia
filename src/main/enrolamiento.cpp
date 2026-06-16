@@ -60,6 +60,9 @@ bool huellaYaExiste(uint8_t* idExistente) {
 }
 
 void enrollarDedoEnId(uint8_t id, const char* nombre) {
+  pantallaMsg(nombre, "Dedo 1 de 2", "");
+  if (!esperarDedo()) return;
+
   uint8_t idExistente;
   if (huellaYaExiste(&idExistente)) {
     char nombreExistente[NOMBRE_MAX];
@@ -70,12 +73,9 @@ void enrollarDedoEnId(uint8_t id, const char* nombre) {
       snprintf(linea3, sizeof(linea3), "como ID %d", idExistente);
     pantallaMsg(nombre, "Huella ya existe", linea3);
     notificarError();
+    delay(2000);
     return;
   }
-
-  // mostrar nombre del estudiante solo si ya hay dedo puesto
-  pantallaMsg(nombre, "Dedo 1 de 2", "");
-  if (!esperarDedo()) return;
 
   uint8_t p = finger.getImage();
   if (p != FINGERPRINT_OK) { notificarError(); return; }
@@ -98,12 +98,6 @@ void enrollarDedoEnId(uint8_t id, const char* nombre) {
   p = finger.createModel();
   if (p != FINGERPRINT_OK) {
     pantallaMsg(nombre, "No coinciden", "");
-    notificarError();
-    return;
-  }
-
-  if (huellaYaExiste(&idExistente)) {
-    pantallaMsg("ENROLAR", "Ya existe en BD", "");
     notificarError();
     return;
   }
