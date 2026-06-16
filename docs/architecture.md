@@ -19,60 +19,61 @@
               │         IDLE                │
               │  OLED: "Coloca el dedo"     │
               └──────────────┬──────────────┘
+               │
+                     ┌───────┴───────┐
+                     │   ¿Dedo puesto?│
+                     └───────┬───────┘
                              │
-                    ┌───────┴───────┐
-                    │   ¿Dedo puesto?│
-                    └───────┬───────┘
-                            │
-                      ┌─────┴─────┐
-                   NO │           │ SÍ
-                 ┌────┘           └────────────┐
-                 │                             │
-              IDLE                  ┌──────────┴──────────┐
-                                   │   fingerSearch()    │
-                                   │   → ID              │
-                                   └──────────┬──────────┘
-                                              │
-                                    ┌─────────┴─────────┐
-                                    │   ID ≠ 0?         │
-                                    └─────────┬─────────┘
-                                              │
-                              ┌───────────────┼───────────────┐
-                              │               │               │
-                         ┌────┴────┐    ┌─────┴─────┐   ┌────┴────┐
-                         │ ASIST.  │    │ ENROLAR   │   │CORREGIR │
-                         │(default)│    │ (botón x1) │   │(botón x2)│
-                         └────┬────┘    └─────┬─────┘   └────┬────┘
-                              │               │              │
-                         ┌────┴────┐    ┌─────┴─────┐   ┌────┴────┐
-                         │Buscar   │    │Verificar   │   │Mostrar  │
-                         │nombre en│    │duplicado   │   │ID+nombre│
-                         │ESTUD.CSV│    │(AS608)     │   │+botón   │
-                         └────┬────┘    └─────┬─────┘   └────┬────┘
-                              │               │              │
-                         ┌────┴────┐    ┌─────┴─────┐   ┌────┴────┐
-                         │Leer RTC │    │Enrolar    │   │¿Confirma?│
-                         └────┬────┘    │2 tomas     │   └────┬────┘
-                              │         └─────┬─────┘    NO  │  SÍ
-                         ┌────┴────┐         ┌───────┐   ┌───┴───┐
-                         │Verificar│         │Guardar│   │Borrar │
-                         │duplicado│         │modelo │   │template│
-                         │ASIST.CSV│         │AS608  │   │+re-enr│
-                         └────┬────┘         └───┬───┘   └───────┘
-                         ┌────┴────┐            │
-                      SÍ │         │ NO      ┌──┴───┐
-                    ┌────┘         └─────┐   │ OK!  │
-                    │                    │   │BEEP  │
-               ┌────┴────┐         ┌─────┴┐  │OLED ✓│
-               │RECHAZAR │         │GUARD │  └──────┘
-               │BEEP larg│         │CSV   │      │
-               │"Ya reg."│         │BEEP  │      │
-               └─────────┘         │corto │      │
-                                   └──────┘      │
-                                      │          │
-                                      └──────────┘
-                                         │
-                                     (vuelve a IDLE)
+                       ┌─────┴─────┐
+                    NO │           │ SÍ
+                  ┌────┘           └──────────────────────┐
+                  │                                       │
+               IDLE                     ┌─────────────────┴─────────────────┐
+                                        │        fingerSearch()            │
+                                        │        → ID                      │
+                                        └─────────────────┬────────────────┘
+                                                          │
+                                                ┌─────────┴─────────┐
+                                                │   ID ≠ 0?         │
+                                                └─────────┬─────────┘
+                                                          │
+                      ┌───────────────────────────────────┼───────────────────────┐
+                      │                                   │                       │
+                 ┌────┴────┐                        ┌─────┴─────┐          ┌─────┴─────┐
+                 │ ASIST.  │                        │ ENROLAR   │          │ CORREGIR  │
+                 │(default)│                        │ (botón ×1) │          │ (botón ×2) │
+                 └────┬────┘                        └─────┬─────┘          └─────┬─────┘
+                      │                                   │                      │
+                 ┌────┴────┐                        ┌─────┴─────┐          ┌─────┴─────┐
+                 │Buscar   │                        │BuscarSin   │          │Mostrar    │
+                 │nombre en│                        │Huella() en │          │ID+nombre  │
+                 │ALUMNOS  │                        │ALUMNOS.CSV │          │+botón     │
+                 │.CSV     │                        └─────┬─────┘          └─────┬─────┘
+                 └────┬────┘                              │                      │
+                      │                          ┌────────┴────────┐      ┌──────┴──────┐
+                 ┌────┴────┐                     │   enrollarDedo  │      │  ¿Confirma?  │
+                 │Leer RTC │                     │   EnId(id, nom) │      └──────┬──────┘
+                 └────┬────┘                     │   (2 tomas)     │         NO  │  SÍ
+                      │                          └────────┬────────┘      ┌──────┴──────┐
+                 ┌────┴────┐                               │              │  Borrar     │
+                 │Verificar│                          ┌────┴────┐         │  template   │
+                 │duplicado│                          │  OK!    │         │  +re-enrol  │
+                 │ASIST.CSV│                          │  BEEP   │         └─────────────┘
+                 └────┬────┘                          │OLED ✓   │               │
+                 ┌────┴────┐                          └─────────┘               │
+              SÍ │         │ NO                           │                     │
+            ┌────┘         └─────┐                        │                     │
+            │                    │                         │                     │
+       ┌────┴────┐         ┌─────┴┐                        │                     │
+       │RECHAZAR │         │GUARD │                        │                     │
+       │BEEP larg│         │CSV   │                        │                     │
+       │"Ya reg."│         │BEEP  │                        │                     │
+       └─────────┘         │corto │                        │                     │
+                           └──────┘                        │                     │
+                              │                            │                     │
+                              └────────────────────────────┴─────────────────────┘
+                                                         │
+                                                     (vuelve a IDLE)
 
       ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
 
@@ -110,19 +111,24 @@ IDLE → dedo → fingerSearch() → ID ≠ 0?
 
 ### ENROLAR
 ```
-IDLE → dedo → fingerSearch() → ID ≠ 0?
-  └─ NO → es huella nueva → continuar
-  └─ SÍ → "Esta huella ya es ID {N}" → IDLE (rechazar)
+buscarSinHuella() en ALUMNOS.CSV (primer ID sin template en AS608)
+  └─ Ninguno → "Todos los estudiantes OK" → IDLE
+  └─ Encuentra ID libre → mostrar "Enrolar a: {Nombre} ID {N}"
 
-Capturar imagen 1 → "Retira dedo"
-Capturar imagen 2 → finger.createModel()
-  └─ falla → "No coinciden", BEEP largo → IDLE
-
-fingerSearch() (verificar duplicado otra vez)
-  └─ SÍ match → "Esta huella ya existe" → IDLE
-
-Buscar primer ID sin enrolar en AS608:
-  └─ finger.storeModel(ID_libre) → BEEP corto → "ID {N} enrolado" → IDLE
+enrollarDedoEnId(id, nombre):
+  └─ OLED: "{Nombre} Dedo 1 de 2"
+  └─ esperarDedo() + huellaYaExiste()
+       ├─ SÍ → "Huella ya existe como {Otro}"", rechazar → IDLE
+       └─ NO → image2Tz(1)
+  └─ "Retira dedo" → esperarSinDedo()
+  └─ "{Nombre} Dedo 2 de 2" → esperarDedo() → image2Tz(2)
+  └─ finger.createModel()
+       ├─ falla → "No coinciden", BEEP largo → IDLE
+       └─ OK → verificar ID no ocupado (finger.loadModel)
+            ├─ ocupado → "ID ocupado" → IDLE
+            └─ libre → finger.storeModel(id)
+                 ├─ OK → "Enrolado OK ID {N}", BEEP corto → IDLE
+                 └─ Error → "Error guardar", BEEP largo → IDLE
 ```
 
 ### CORREGIR
@@ -192,7 +198,7 @@ Durante la operación normal, el sistema verifica periódicamente:
 | Periférico | Método | Si falla |
 |------------|--------|----------|
 | **OLED** | `Wire.beginTransmission(0x3C)` | LED13 + Buzzer (alertaDoble), sin pantalla |
-| **microSD** | `SD.begin(CS)` | OLED: "microSD Perdida - No registrar" |
+| **microSD** | `SD.begin(CS)` | OLED: "microSD Perdida - Insertar tarjeta" |
 | **RTC** | `Wire.beginTransmission(0x68)` | OLED: "RTC Perdido - Revisar conexion" |
 | **AS608** | `finger.verifyPassword()` | OLED: "AS608 Perdido - Revisar cable" |
 
@@ -232,14 +238,16 @@ Todos los módulos viven en `src/main/` (flat, sin subdirectorios):
 main.ino                       # setup(), loop(), formatearSistema()
     │
     ├── constantes.h            # Pines, CSV, modos, buffers (FECHA_MAX, MSG_MAX, etc.)
-    ├── buzzer.h/cpp            # beepExito(), beepError(), alertaDoble()
+    ├── notificador.h/cpp       # notificarOk(), notificarError(), notificarAlerta() — LED13 + buzzer
     ├── pantalla.h/cpp          # pantallaMsg(), init/presente/reinit — solo OLED
     ├── rtc_helper.h/cpp        # rtcInit(), obtenerFechaHora()
-    ├── almacenamiento.h/cpp    # initSD(), buscarNombre(), registrarAsistencia()
-    ├── enrolamiento.h/cpp      # as608Init(), capturarHuella(), enrollarDedo()
+    ├── almacenamiento.h/cpp    # initSD() (crea CSVs), buscarNombre(), buscarSinHuella(),
+    │                           # hayEstudiantes(), registrarAsistencia(), esDuplicado(), formatearCSVs()
+    ├── enrolamiento.h/cpp      # as608Init(), capturarHuella(), enrollarDedo(),
+    │                           # enrollarDedoEnId(), esperarDedo(), esperarSinDedo()
     ├── asistencia.h/cpp        # tomarAsistencia(), corregirDedo()
     ├── verificador.h/cpp       # Periferico{} struct, verificarPeriferico() — array de salud
-    └── modos.h/cpp             # HANDLERS_MODO[] + NOMBRES_MODO[], ejecutarModo()
+    └── modos.h/cpp             # HANDLERS_MODO[] + NOMBRES_MODO[], ejecutarModo(), cambiarModo()
 ```
 
 ## Uso de memoria (ATmega2560)
@@ -262,13 +270,27 @@ main.ino                       # setup(), loop(), formatearSistema()
 
 ## Formato de datos
 
-### CSV en microSD (`ASIST.CSV`)
+### CSV en microSD
+
+**`ALUMNOS.CSV`** — catálogo de estudiantes (ejemplo completo en `examples/ALUMNOS.CSV`):
+```
+ID,Nombre,Apellido
+01,Julio,Amaya
+02,Tomas,Amaya
+... (30 estudiantes, hasta Sara Palacios)
+```
+
+**`ASIST.CSV`** — registro de asistencia (ejemplo completo en `docs/ASIST.CSV`):
 ```
 ID,Fecha,Hora
-1,2026-06-05,08:30:00
-2,2026-06-05,08:31:12
-1,2026-06-06,08:29:45
+01,2026-06-01,07:47:17
+02,2026-06-01,07:43:20
+03,2026-06-01,08:15:03
+...
 ```
+
+Ver `examples/ASIST.CSV` para ejemplo completo con 30 estudiantes y 4 semanas de datos.  
+Generar tabla de asistencia: `python3 examples/reporte.py` (requiere pandas).
 
 - Separador: coma (`,`)
 - Fecha: `YYYY-MM-DD`
@@ -280,3 +302,19 @@ ID,Fecha,Hora
 
 Regla: mismo `ID` no puede registrarse dos veces en la misma `Fecha`.  
 Implementación: comparar ID + Fecha antes de escribir nuevo registro.
+
+## FORMATEAR (Modo 3)
+
+```
+Doble confirmación con pulsador:
+  1. "Manten 3s para confirmar" → mantener 3s o vuelve a ASISTENCIA
+  2. "Manten 3s para ejecutar" → mantener 3s o vuelve a ASISTENCIA
+  3. "FORMATEANDO... No apagar"
+     └── finger.emptyDatabase()      → borra todas las huellas del AS608
+     └── SD.remove() + SD.open()     → elimina y recrea CSVs con headers
+  4. "SISTEMA FORMATEADO" → BEEP → vuelve a MODO ASISTENCIA
+```
+
+## Inicialización automática de CSVs
+
+`initSD()` llama a `SD.begin()`. Si `ALUMNOS.CSV` o `ASIST.CSV` no existen, los crea automáticamente con sus headers. Esto permite arrancar con una microSD vacía (sin formateo manual previo).

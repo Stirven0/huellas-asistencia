@@ -41,6 +41,8 @@ static Periferico perifericos[PERIF_COUNT];
 
 #define VERIFICAR_CADA_MS 3000
 
+// Inicializa perifericos uno por uno en cascada.
+// Si uno falla, no avanza y reintenta cada 2s.
 void detectarPerifericos() {
   while (true) {
     if (pantallaInit()) break;
@@ -82,6 +84,7 @@ void detectarPerifericos() {
   }
 }
 
+// Revisa el pulsador con debounce y cooldown
 void revisarBoton() {
   if (digitalRead(BUTTON_PIN) == LOW && millis() - ultimoBoton > BOTON_COOLDOWN_MS) {
     ultimoBoton = millis();
@@ -89,6 +92,7 @@ void revisarBoton() {
   }
 }
 
+// Muestra mensaje de recuperacion tras reconexion exitosa
 void mostrarRecuperacion(const char* nombre, const char* mensaje) {
   if (!oledAlerta) {
     notificarOk();
@@ -97,6 +101,8 @@ void mostrarRecuperacion(const char* nombre, const char* mensaje) {
   }
 }
 
+// Modo FORMATEAR: doble confirmacion de 3s con el pulsador.
+// Borra base de huellas (AS608) y recrea CSVs en microSD.
 void formatearSistema() {
   unsigned long inicio;
   bool paso1 = false, paso2 = false;

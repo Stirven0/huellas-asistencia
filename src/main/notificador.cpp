@@ -2,6 +2,7 @@
 #include "notificador.h"
 #include "constantes.h"
 
+// Pitido corto + LED: operacion exitosa
 void notificarOk() {
   digitalWrite(LED_BUILTIN, HIGH);
   digitalWrite(BUZZER_PIN, HIGH);
@@ -10,6 +11,7 @@ void notificarOk() {
   digitalWrite(BUZZER_PIN, LOW);
 }
 
+// Pitido largo + LED: operacion fallida
 void notificarError() {
   digitalWrite(LED_BUILTIN, HIGH);
   digitalWrite(BUZZER_PIN, HIGH);
@@ -18,6 +20,7 @@ void notificarError() {
   digitalWrite(BUZZER_PIN, LOW);
 }
 
+// Doble pitido + LED: alerta de periferico perdido
 void notificarAlerta() {
   for (int i = 0; i < 2; i++) {
     digitalWrite(LED_BUILTIN, HIGH);

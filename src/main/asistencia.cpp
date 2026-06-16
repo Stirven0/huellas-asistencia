@@ -6,6 +6,8 @@
 #include "almacenamiento.h"
 #include "rtc_helper.h"
 
+// Modo ASISTENCIA: espera dedo, busca ID, verifica duplicado,
+// registra timestamp en ASIST.CSV.
 void tomarAsistencia() {
   if (!hayEstudiantes()) {
     pantallaMsg("ASISTENCIA", "No hay", "estudiantes");
@@ -48,6 +50,7 @@ void tomarAsistencia() {
   }
 }
 
+// Modo CORREGIR: captura huella existente, la borra y re-enrola en el mismo ID
 void corregirDedo() {
   pantallaMsg("CORREGIR", "Coloca dedo", "a reemplazar");
 

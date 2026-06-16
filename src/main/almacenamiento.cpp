@@ -4,6 +4,7 @@
 
 static bool sdOk = false;
 
+// Inicializa la microSD y crea CSVs si no existen
 bool initSD() {
   sdOk = SD.begin(SD_CS_PIN);
   if (!sdOk) return false;
@@ -19,10 +20,12 @@ bool initSD() {
   return true;
 }
 
+// Re-verifica presencia de la microSD (re-inicializa)
 bool sdPresente() {
   return initSD();
 }
 
+// Busca el nombre de un estudiante por su ID en ALUMNOS.CSV
 bool buscarNombre(uint8_t id, char* nombreOut) {
   if (!sdOk) return false;
   File f = SD.open(ESTUDIANTES_CSV);
@@ -54,6 +57,7 @@ bool buscarNombre(uint8_t id, char* nombreOut) {
   return encontrado;
 }
 
+// Agrega un registro de asistencia (ID,Fecha,Hora) a ASIST.CSV
 bool registrarAsistencia(uint8_t id, const char* fecha, const char* hora) {
   if (!sdOk) return false;
   File f = SD.open(ASIST_CSV, FILE_WRITE);
@@ -68,6 +72,7 @@ bool registrarAsistencia(uint8_t id, const char* fecha, const char* hora) {
   return true;
 }
 
+// Verifica si ya existe un registro del mismo ID en la misma fecha
 bool esDuplicado(uint8_t id, const char* fecha) {
   if (!sdOk) return false;
   File f = SD.open(ASIST_CSV);
@@ -92,6 +97,7 @@ bool esDuplicado(uint8_t id, const char* fecha) {
   return false;
 }
 
+// Verifica si ALUMNOS.CSV tiene al menos un estudiante (excluye header)
 bool hayEstudiantes() {
   if (!sdOk) return false;
   File f = SD.open(ESTUDIANTES_CSV);
@@ -109,6 +115,7 @@ bool hayEstudiantes() {
   return encontrado;
 }
 
+// Elimina y recrea ambos CSVs con sus headers
 bool formatearCSVs() {
   if (!sdOk) return false;
   if (SD.exists(ESTUDIANTES_CSV)) SD.remove(ESTUDIANTES_CSV);
@@ -120,6 +127,8 @@ bool formatearCSVs() {
   return true;
 }
 
+// Busca el primer estudiante en ALUMNOS.CSV sin huella registrada en el AS608.
+// Itera los IDs del CSV y llama finger.loadModel() para verificar si existe template.
 bool buscarSinHuella(uint8_t* idOut, char* nombreOut) {
   if (!sdOk) return false;
   File f = SD.open(ESTUDIANTES_CSV);

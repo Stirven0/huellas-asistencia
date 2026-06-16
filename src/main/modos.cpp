@@ -20,12 +20,14 @@ static const ModoHandler HANDLERS_MODO[MODOS_COUNT] = {
   formatearSistema
 };
 
+// Ejecuta el handler correspondiente al modo actual
 void ejecutarModo(uint8_t modo) {
   if (modo < MODOS_COUNT) {
     HANDLERS_MODO[modo]();
   }
 }
 
+// Cambia al siguiente modo (circular) y muestra el nombre en OLED
 void cambiarModo(uint8_t* modoActual) {
   *modoActual = (*modoActual + 1) % MODOS_COUNT;
   pantallaMsg("MODO:", NOMBRES_MODO[*modoActual], "Coloca el dedo");
