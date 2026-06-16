@@ -90,12 +90,12 @@ huellas-asistencia/
 
 ## Fases de implementación
 
-| Fase | Semana | Objetivo                                      |
-|------|--------|-----------------------------------------------|
-| 1    | 1      | Pruebas individuales de sensores (AS608 vía serial) |
-| 2    | 2      | Integración mínima: huella + OLED + energía   |
-| 3    | 3      | Persistencia offline: RTC + microSD + CSV     |
-| 4    | 4      | Validación final + interfaz Python en PC      |
+| Fase | Semana | Objetivo                                      | Estado |
+|------|--------|-----------------------------------------------|--------|
+| 1    | 1      | Pruebas individuales de sensores (AS608 vía serial) | ✅ Completa |
+| 2    | 2      | Integración mínima: huella + OLED + energía   | ✅ Completa |
+| 3    | 3      | Persistencia offline: RTC + microSD + CSV     | ✅ Completa |
+| 4    | 4      | Validación final + interfaz Python en PC      | ✅ Completa |
 
 ---
 

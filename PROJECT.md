@@ -7,7 +7,7 @@
 
 **Nombre:** Sistema Biométrico de Huellas Digitales para Registro de Asistencia Académica  
 **Tipo:** Sistema embebido IoT offline  
-**Estado actual:** Fase 2 — Completa (firmware integrado en `src/main/`, refactorizado con módulos planos)  
+**Estado actual:** ✅ Fase 4 — Completa (todas las fases implementadas)  
 **Lenguaje:** C++ con Arduino SDK  
 **MCU:** Arduino Mega 2560 (ATmega2560, AVR)
 
