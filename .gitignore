@@ -15,5 +15,8 @@ Thumbs.db
 *.log
 /tmp/
 
-# Stale duplicate (edit src/utils/constantes.h instead)
+# Stale duplicate in root (edit src/main/constantes.h instead)
 /constantes.h
+
+# Session export files (opencode)
+session-*.md
