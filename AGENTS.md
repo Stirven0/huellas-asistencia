@@ -27,6 +27,7 @@
 |-------|----------|
 | Serial loopback (Mega clone) | `flush()` + 300ms cooldown after `setup()` in all serial tests |
 | microSD needs voltage dividers (1KΩ+2.2KΩ) on MOSI/SCK/CS | Signal-only module has no level shifters |
+| AS608 TCH pin deactivated | Too sensitive to electrical noise; UART `finger.getImage()` polling instead |
 | AS608 3.3V only (8‑pin capacitive) | Voltage divider on Mega TX1→AS608 RX; no TCH (UART poll only) |
 | OLED SSD1306 v4.3 | Use `SSD1306_SWITCHCAPVCC` |
 | DS3231 battery | `rtc.lostPower()` → auto-sync from `__DATE__`/`__TIME__` |

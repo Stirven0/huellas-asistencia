@@ -11,7 +11,8 @@
 // AS608 — Sensor de huellas (UART via Serial1)
 #define FP_RX_PIN       19   // RX1 del Mega
 #define FP_TX_PIN       18   // TX1 del Mega
-#define FP_TOUCH_PIN    6    // TCH — HIGH = dedo detectado
+// DESACTIVADO: demasiado sensible al ruido. Se usa UART polling con finger.getImage()
+// #define FP_TOUCH_PIN    6    // TCH — HIGH = dedo detectado
 
 // microSD — SPI (sin regulador — alimentar a 3.3V solamente)
 #define SD_CS_PIN       53   // Chip Select

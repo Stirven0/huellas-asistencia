@@ -4,7 +4,9 @@
 // PINES DE HARDWARE
 #define FP_RX_PIN       19
 #define FP_TX_PIN       18
-#define FP_TOUCH_PIN    6
+// NOTA: FP_TOUCH_PIN (Pin 6) desactivado — demasiado sensible al ruido
+// La deteccion de dedo se hace via UART polling con finger.getImage()
+// #define FP_TOUCH_PIN    6
 #define SD_CS_PIN       53
 #define SD_MOSI_PIN     51
 #define SD_MISO_PIN     50

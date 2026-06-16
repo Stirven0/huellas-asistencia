@@ -23,16 +23,9 @@
 | `modos` | `.h` + `.cpp` | HANDLERS_MODO[] array + NOMBRES_MODO[], ejecutarModo() |
 | `constantes.h` | — | Pines, CSV, modos, buffers |
 
-## Conexiones adicionales por TCH
+## Pin TCH del AS608 — DESACTIVADO
 
-| Pin | Señal | Conecta a |
-|-----|-------|-----------|
-| Mega 6 | FP_TOUCH_PIN | AS608 TCH |
-| 3.3V | - | AS608 VA |
-
-## Pin TCH del AS608
-
-El pin **TCH** (Touch) del AS608 es una salida digital que va a **HIGH** cuando detecta un dedo sobre el sensor. Se conecta a `FP_TOUCH_PIN` (pin 6 del Mega). VA se alimenta a 3.3V.
+El pin **TCH** (Touch) del AS608 se desactivó porque se disparaba sin dedo presente (ruido eléctrico de los conversores DC-DC). La detección de dedo se hace vía UART polling con `finger.getImage()`.
 
 ### Función `esperarDedo()` — polling por UART
 
@@ -62,7 +55,7 @@ INICIO
   └── OLED: "Coloca dedo..."
 
 ESTUDIANTE coloca dedo
-  └── esperarDedo()  // TCH bloquea hasta dedo presente
+  └── esperarDedo()  // getImage() polling, 5s timeout
   └── AS608 captura + fingerSearch()
       ├── Sin match → BEEP largo, OLED: "No reconocido", vuelve al inicio
       └── Match → ID = finger.fingerID
