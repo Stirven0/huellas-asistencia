@@ -12,16 +12,19 @@
  *   3. RTC
  *   4. AS608
  *
- * Modos: ASISTENCIA (defecto) | ENROLAR | CORREGIR
- * Pulsador Pin 7 cambia modo.
+ * Modos: ASISTENCIA (defecto) | ENROLAR | CORREGIR | FORMATEAR
+ * Pulsador Pin 3 cambia modo.
  */
 
 #include "constantes.h"
+#include "buzzer.h"
 #include "pantalla.h"
 #include "rtc_helper.h"
 #include "almacenamiento.h"
 #include "enrolamiento.h"
 #include "asistencia.h"
+#include "verificador.h"
+#include "modos.h"
 
 uint8_t modoActual = MODO_ASISTENCIA;
 bool botonPendiente = false;
@@ -32,6 +35,9 @@ bool oledAlerta = false;
 bool rtcAlerta = false;
 bool as608Alerta = false;
 bool sdAlerta = false;
+
+#define PERIF_COUNT 4
+static Periferico perifericos[PERIF_COUNT];
 
 #define VERIFICAR_CADA_MS 3000
 
@@ -66,80 +72,18 @@ void detectarPerifericos() {
   }
 }
 
-void cambiarModo() {
-  modoActual = (modoActual + 1) % 4;
-
-  const char* nombreModo = "";
-  if (modoActual == MODO_ASISTENCIA) nombreModo = "ASISTENCIA";
-  else if (modoActual == MODO_ENROLAMIENTO) nombreModo = "ENROLAR";
-  else if (modoActual == MODO_CORRECCION) nombreModo = "CORREGIR";
-  else nombreModo = "FORMATEAR";
-
-  pantallaMsg("MODO:", nombreModo, "Coloca el dedo");
-  beepExito();
-  delay(1500);
-  while (digitalRead(BUTTON_PIN) == LOW) delay(10);
-}
-
 void revisarBoton() {
-  if (digitalRead(BUTTON_PIN) == LOW && millis() - ultimoBoton > 300) {
+  if (digitalRead(BUTTON_PIN) == LOW && millis() - ultimoBoton > BOTON_COOLDOWN_MS) {
     ultimoBoton = millis();
     botonPendiente = true;
   }
 }
 
-// Solo actualizan flags y recuperacion, sin mostrar errores
-void verificarOLED() {
-  if (!pantallaPresente()) {
-    oledAlerta = true;
-  } else if (oledAlerta) {
-    pantallaReinit();
-    oledAlerta = false;
-    pantallaMsg("OLED", "Recuperada", "");
+void mostrarRecuperacion(const char* nombre, const char* mensaje) {
+  if (!oledAlerta) {
+    pantallaMsg(nombre, mensaje, "");
     beepExito();
     delay(1000);
-  }
-}
-
-void verificarSD() {
-  if (!sdPresente()) {
-    sdAlerta = true;
-  } else if (sdAlerta) {
-    initSD();
-    sdAlerta = false;
-    if (!oledAlerta) {
-      pantallaMsg("microSD", "Recuperada", "");
-      beepExito();
-      delay(1000);
-    }
-  }
-}
-
-void verificarRTC() {
-  if (!rtcPresente()) {
-    rtcAlerta = true;
-  } else if (rtcAlerta) {
-    rtcInit();
-    rtcAlerta = false;
-    if (!oledAlerta) {
-      pantallaMsg("RTC", "Recuperado", "");
-      beepExito();
-      delay(1000);
-    }
-  }
-}
-
-void verificarAS608() {
-  if (!as608Presente()) {
-    as608Alerta = true;
-  } else if (as608Alerta) {
-    as608Init();
-    as608Alerta = false;
-    if (!oledAlerta) {
-      pantallaMsg("AS608", "Recuperado", "");
-      beepExito();
-      delay(1000);
-    }
   }
 }
 
@@ -185,15 +129,8 @@ void formatearSistema() {
   pantallaMsg("FORMATEANDO...", "", "No apagar");
   delay(500);
 
-  finger.emptyDatabase();
-
-  if (SD.exists(ESTUDIANTES_CSV)) SD.remove(ESTUDIANTES_CSV);
-  if (SD.exists(ASIST_CSV)) SD.remove(ASIST_CSV);
-
-  File f = SD.open(ESTUDIANTES_CSV, FILE_WRITE);
-  if (f) { f.println("ID,Nombre,Apellido"); f.close(); }
-  f = SD.open(ASIST_CSV, FILE_WRITE);
-  if (f) { f.println(CSV_HEADER); f.close(); }
+  limpiarHuellas();
+  formatearCSVs();
 
   pantallaMsg("SISTEMA", "FORMATEADO", "Volviendo...");
   beepExito();
@@ -216,16 +153,33 @@ void setup() {
   delay(1500);
 
   while (Serial.available()) Serial.read();
+
+  perifericos[0] = (Periferico){pantallaPresente, pantallaReinit, &oledAlerta};
+  perifericos[1] = (Periferico){sdPresente,     initSD,          &sdAlerta};
+  perifericos[2] = (Periferico){rtcPresente,    rtcInit,         &rtcAlerta};
+  perifericos[3] = (Periferico){as608Presente,  as608Init,       &as608Alerta};
+
   ultimaVerificacion = millis();
 }
 
 void loop() {
   if (millis() - ultimaVerificacion > VERIFICAR_CADA_MS) {
     ultimaVerificacion = millis();
-    verificarOLED();
-    verificarSD();
-    verificarRTC();
-    verificarAS608();
+
+    static const char* nombres[PERIF_COUNT] = {"OLED", "microSD", "RTC", "AS608"};
+    static const char* recuperados[PERIF_COUNT] = {"Recuperada", "Recuperada", "Recuperado", "Recuperado"};
+
+    for (uint8_t i = 0; i < PERIF_COUNT; i++) {
+      if (verificarPeriferico(&perifericos[i])) {
+        if (i == 0) {
+          pantallaMsg(nombres[i], recuperados[i], "");
+          beepExito();
+          delay(1000);
+        } else {
+          mostrarRecuperacion(nombres[i], recuperados[i]);
+        }
+      }
+    }
   }
 
   // PRIORIDAD 1: OLED perdida → solo LED+buzzer, nada mas
@@ -264,19 +218,11 @@ void loop() {
 
   if (botonPendiente) {
     botonPendiente = false;
-    cambiarModo();
+    cambiarModo(&modoActual);
     return;
   }
 
-  if (modoActual == MODO_ASISTENCIA) {
-    tomarAsistencia();
-  } else if (modoActual == MODO_ENROLAMIENTO) {
-    enrollarDedo();
-  } else if (modoActual == MODO_CORRECCION) {
-    corregirDedo();
-  } else {
-    formatearSistema();
-  }
+  ejecutarModo(modoActual);
 
   for (int i = 0; i < 10; i++) {
     if (digitalRead(BUTTON_PIN) == LOW) {

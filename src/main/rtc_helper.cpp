@@ -28,6 +28,6 @@ void obtenerFechaHora(char* fechaOut, char* horaOut) {
     return;
   }
   DateTime now = rtc.now();
-  snprintf(fechaOut, 12, "%04d-%02d-%02d", now.year(), now.month(), now.day());
-  snprintf(horaOut, 10, "%02d:%02d:%02d", now.hour(), now.minute(), now.second());
+  snprintf(fechaOut, FECHA_MAX, "%04d-%02d-%02d", now.year(), now.month(), now.day());
+  snprintf(horaOut, HORA_MAX, "%02d:%02d:%02d", now.hour(), now.minute(), now.second());
 }

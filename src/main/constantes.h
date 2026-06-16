@@ -24,6 +24,10 @@
 #define BUZZER_LONG         500
 #define NOMBRE_MAX          30
 #define LINEA_MAX           50
+#define FECHA_MAX           12
+#define HORA_MAX            10
+#define MSG_MAX             22
+#define BOTON_COOLDOWN_MS   300
 
 // ARCHIVOS CSV
 #define ESTUDIANTES_CSV  "ESTUDIANTES.CSV"

@@ -1,3 +1,6 @@
+// OBSOLETO — este archivo no se incluye en la compilación.
+// La fuente de verdad es src/main/constantes.h
+// Conservado solo como referencia histórica.
 #ifndef CONSTANTES_H
 #define CONSTANTES_H
 

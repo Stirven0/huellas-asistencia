@@ -1,5 +1,6 @@
 #include "enrolamiento.h"
 #include "constantes.h"
+#include "buzzer.h"
 #include "pantalla.h"
 #include "almacenamiento.h"
 
@@ -43,17 +44,19 @@ bool esperarSinDedo() {
   return true;
 }
 
-bool huellaYaExiste(uint8_t* idExistente) {
+bool capturarHuella(uint8_t* idOut) {
   uint8_t p = finger.getImage();
   if (p != FINGERPRINT_OK) return false;
   p = finger.image2Tz();
   if (p != FINGERPRINT_OK) return false;
   p = finger.fingerSearch();
-  if (p == FINGERPRINT_OK) {
-    *idExistente = finger.fingerID;
-    return true;
-  }
-  return false;
+  if (p != FINGERPRINT_OK) return false;
+  *idOut = finger.fingerID;
+  return true;
+}
+
+bool huellaYaExiste(uint8_t* idExistente) {
+  return capturarHuella(idExistente);
 }
 
 void enrollarDedo() {
@@ -66,7 +69,7 @@ void enrollarDedo() {
   uint8_t idExistente;
   if (huellaYaExiste(&idExistente)) {
     char nombre[NOMBRE_MAX];
-    char msg[22];
+    char msg[MSG_MAX];
     if (buscarNombre(idExistente, nombre))
       snprintf(msg, sizeof(msg), "Ya es ID %d: %s", idExistente, nombre);
     else
@@ -116,7 +119,7 @@ void enrollarDedo() {
 
   p = finger.storeModel(id);
   if (p == FINGERPRINT_OK) {
-    char msg[16];
+    char msg[MSG_MAX];
     snprintf(msg, sizeof(msg), "ID %d OK", id);
     pantallaMsg("ENROLAR", msg, "");
     beepExito();
@@ -129,4 +132,9 @@ void enrollarDedo() {
 bool borrarTemplate(uint8_t id) {
   if (!as608Ok) return false;
   return (finger.deleteModel(id) == FINGERPRINT_OK);
+}
+
+bool limpiarHuellas() {
+  if (!as608Ok) return false;
+  return (finger.emptyDatabase() == FINGERPRINT_OK);
 }

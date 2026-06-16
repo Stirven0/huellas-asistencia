@@ -9,5 +9,6 @@ bool sdPresente();
 bool buscarNombre(uint8_t id, char* nombreOut);
 bool registrarAsistencia(uint8_t id, const char* fecha, const char* hora);
 bool esDuplicado(uint8_t id, const char* fecha);
+bool formatearCSVs();
 
 #endif

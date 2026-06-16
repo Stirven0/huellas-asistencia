@@ -11,10 +11,7 @@ bool initSD() {
 }
 
 bool sdPresente() {
-  pinMode(SD_CS_PIN, OUTPUT);
-  digitalWrite(SD_CS_PIN, HIGH);
-  sdOk = SD.begin(SD_CS_PIN);
-  return sdOk;
+  return initSD();
 }
 
 bool buscarNombre(uint8_t id, char* nombreOut) {
@@ -84,4 +81,15 @@ bool esDuplicado(uint8_t id, const char* fecha) {
   }
   f.close();
   return false;
+}
+
+bool formatearCSVs() {
+  if (!sdOk) return false;
+  if (SD.exists(ESTUDIANTES_CSV)) SD.remove(ESTUDIANTES_CSV);
+  if (SD.exists(ASIST_CSV)) SD.remove(ASIST_CSV);
+  File f = SD.open(ESTUDIANTES_CSV, FILE_WRITE);
+  if (f) { f.println("ID,Nombre,Apellido"); f.close(); }
+  f = SD.open(ASIST_CSV, FILE_WRITE);
+  if (f) { f.println(CSV_HEADER); f.close(); }
+  return true;
 }

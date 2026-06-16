@@ -8,9 +8,9 @@
 - **Upload:** `arduino-cli compile --fqbn arduino:avr:mega --upload --port /dev/ttyUSB0 src/main/`
 - **Permission:** `sudo chmod 666 /dev/ttyUSB0` before upload
 - **No CI/CD, no automated tests** — manual `.ino` sketches flashed to hardware
-- **No `String`/`malloc`/`new`** — SRAM 8KB, flash ~35KB of 253KB
+- **Constraints:** no `String`/`malloc`/`new`; use `char[]` + `snprintf`; SRAM 8KB, flash ~35KB of 253KB
 
-## Pin assignments (current)
+## Pin assignments
 
 | Función | Pin | Detalle |
 |---------|-----|---------|
@@ -45,42 +45,57 @@
 ## Error priority display
 
 `OLED perdida → microSD perdida → RTC perdido → AS608 perdido`
-
 - Re-verifica cada 3s con hardware real (no cache)
 - En recuperación: mensaje "Recuperado" en OLED
 
 ## Constants & CSV format
 
-- **Active constants:** `src/main/constantes.h`
-- **Canonical source:** `src/utils/constantes.h` (manual mirror)
-- **Stale copy at root** `./constantes.h` — never edit it
+- **Active constants (source of truth):** `src/main/constantes.h`
+- **Stale file:** `src/utils/constantes.h` — missing modes 2-3 and `ESTUDIANTES_CSV`
 - **CSV:** `ASIST.CSV` header `ID,Fecha,Hora`; `ESTUDIANTES.CSV` header `ID,Nombre,Apellido`
 - No spaces, no BOM, ASCII
 
+## Active codebase layout
+
+All firmware lives under `src/main/`. One `.cpp` + `.h` per module (header guards), `delay()` used throughout.
+Peripheral health uses a function-pointer struct array (`verificador.h`), modes dispatch via handler arrays (`modos.h`).
+
+| File | Purpose |
+|------|---------|
+| `main.ino` | Setup, loop, button debounce, format mode, peripheral detection cascade |
+| `almacenamiento.cpp/h` | microSD init, CSV read/write, duplicate check, `formatearCSVs()` |
+| `asistencia.cpp/h` | Attendance and correction flow |
+| `enrolamiento.cpp/h` | AS608 init, `capturarHuella()`, enrollment, template delete, `limpiarHuellas()` |
+| `pantalla.cpp/h` | OLED display only (buzzer extracted to `buzzer`) |
+| `rtc_helper.cpp/h` | DS3231 init, `obtenerFechaHora()` via `snprintf` |
+| `buzzer.cpp/h` | Buzzer beep patterns (`beepExito`, `beepError`, `alertaDoble`) |
+| `verificador.cpp/h` | `Periferico` struct + `verificarPeriferico()`, replaces 4× duplicate health checks |
+| `modos.cpp/h` | Mode handler array, `NOMBRES_MODO[]`, `ejecutarModo()`, `cambiarModo()` |
+| `constantes.h` | All pin defines, CSV filenames, mode constants, buffer sizes (`FECHA_MAX`, `HORA_MAX`, `MSG_MAX`) |
+
 ## Library requirements (install via Arduino Library Manager)
 
-| Library | Min version |
-|---------|-------------|
-| Adafruit Fingerprint Sensor Library | 2.1.0 |
-| RTClib (Adafruit) | 2.1.4 |
-| Adafruit SSD1306 | 2.5.7 |
-| Adafruit GFX | 1.11.9 |
-| SdFat | 2.3.0 (for soft SPI if needed) |
-| SD, Wire, SPI | built-in |
+| Library | Version | Notes |
+|---------|---------|-------|
+| Adafruit Fingerprint Sensor Library | ≥ 2.1.0 | AS608 |
+| RTClib (Adafruit) | ≥ 2.1.4 | DS3231 — not JChristensen version |
+| Adafruit SSD1306 | ≥ 2.5.7 | Installs GFX as dependency |
+| Adafruit GFX | ≥ 1.11.9 | OLED base |
+| SD, Wire, SPI | built-in | No external SD library needed |
+
+## Conventions
+
+- `camelCase` for vars/functions, `UPPER_SNAKE_CASE` for constants
+- Comments in Spanish
+- `snprintf` for string formatting (no `String` class)
+- `Serial.begin(115200)` for debug; `Serial1` for AS608
 
 ## Key reference files
 
 | File | Purpose |
 |------|---------|
 | `docs/architecture.md` | State machine diagram, cascading detection flow |
-| `docs/registro-evolucion.md` | Problem/solution log for all phases |
 | `docs/plan-aplicacion.md` | Application flows (enrollment, attendance, correction) |
+| `docs/dependencies.md` | Full dependency versions and install notes |
 | `.opencode/skills/` | Per-module skill files (load via skill tool) |
-| `.hermes/rules.md` | Legacy Hermes agent rules (preserve) |
-
-## Code conventions
-
-- `camelCase` for vars/functions, `UPPER_SNAKE_CASE` for constants
-- Comments in Spanish
-- One `.cpp` + `.h` per module, header guards
-- `delay()` is used throughout (blocking) — acceptable for single-task project
+| `.hermes/rules.md` | Legacy agent rules (some pin info stale — buttons/pins defined in `constantes.h`) |

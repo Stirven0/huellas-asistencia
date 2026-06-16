@@ -7,7 +7,7 @@
 
 **Nombre:** Sistema Biométrico de Huellas Digitales para Registro de Asistencia Académica  
 **Tipo:** Sistema embebido IoT offline  
-**Estado actual:** Fase 1 — Completa (todos los módulos probados: OLED, RTC, AS608, microSD, buzzer, pulsador)  
+**Estado actual:** Fase 2 — Completa (firmware integrado en `src/main/`, refactorizado con módulos planos)  
 **Lenguaje:** C++ con Arduino SDK  
 **MCU:** Arduino Mega 2560 (ATmega2560, AVR)
 
@@ -29,8 +29,8 @@
 | DS3231      | I2C      | SDA=20, SCL=21           |
 | SSD1306     | I2C      | SDA=20, SCL=21           |
 | microSD     | SPI      | MOSI=51, MISO=50, SCK=52, CS=53 |
-| Buzzer      | Digital  | Pin 8                    |
-| Pulsador    | Digital  | Pin 7 (INPUT_PULLUP)     |
+| Buzzer      | Digital  | Pin 12 (constantes.h)    |
+| Pulsador    | Digital  | Pin 3 (INPUT_PULLUP)     |
 
 ## Restricciones críticas
 
@@ -54,12 +54,20 @@ SPI (built-in)                       # SPI
 
 ## Estructura de archivos relevantes
 
+Todo el firmware está en `src/main/` (flat, sin subdirectorios):
+
 ```
-src/enrollment/   → enrolamiento.cpp / enrolamiento.h
-src/attendance/   → asistencia.cpp / asistencia.h
-src/storage/      → almacenamiento.cpp / almacenamiento.h
-src/display/      → pantalla.cpp / pantalla.h
-src/utils/        → rtc_helper.cpp, constantes.h
+src/main/
+  constantes.h       # Pines, CSV, modos, buffers
+  buzzer.cpp/h       # Beep patterns (extraído de pantalla)
+  pantalla.cpp/h     # OLED display (sin buzzer)
+  rtc_helper.cpp/h   # DS3231 RTC
+  almacenamiento.cpp/h # microSD, CSV, formatearCSVs()
+  enrolamiento.cpp/h   # AS608, capturarHuella(), limpiarHuellas()
+  asistencia.cpp/h     # Toma de asistencia, corrección
+  verificador.cpp/h    # Periferico{} array de salud
+  modos.cpp/h          # HANDLERS_MODO[] array, ejecutarModo()
+  main.ino             # setup(), loop(), formatearSistema()
 ```
 
 ## Formato CSV de salida

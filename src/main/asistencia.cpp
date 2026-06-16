@@ -1,5 +1,6 @@
 #include "asistencia.h"
 #include "constantes.h"
+#include "buzzer.h"
 #include "pantalla.h"
 #include "enrolamiento.h"
 #include "almacenamiento.h"
@@ -10,27 +11,19 @@ void tomarAsistencia() {
 
   if (!esperarDedo()) return;
 
-  uint8_t p = finger.getImage();
-  if (p != FINGERPRINT_OK) { beepError(); return; }
-
-  p = finger.image2Tz();
-  if (p != FINGERPRINT_OK) { beepError(); return; }
-
-  p = finger.fingerSearch();
-  if (p != FINGERPRINT_OK) {
+  uint8_t id;
+  if (!capturarHuella(&id)) {
     pantallaMsg("ASISTENCIA", "No reconocido", "");
     beepError();
     return;
   }
-
-  uint8_t id = finger.fingerID;
   char nombre[NOMBRE_MAX];
 
   if (!buscarNombre(id, nombre)) {
     snprintf(nombre, sizeof(nombre), "ID %d", id);
   }
 
-  char fecha[12], hora[10];
+  char fecha[FECHA_MAX], hora[HORA_MAX];
   obtenerFechaHora(fecha, hora);
 
   if (esDuplicado(id, fecha)) {
@@ -53,23 +46,15 @@ void corregirDedo() {
 
   if (!esperarDedo()) return;
 
-  uint8_t p = finger.getImage();
-  if (p != FINGERPRINT_OK) { beepError(); return; }
-
-  p = finger.image2Tz();
-  if (p != FINGERPRINT_OK) { beepError(); return; }
-
-  p = finger.fingerSearch();
-  if (p != FINGERPRINT_OK) {
+  uint8_t id;
+  if (!capturarHuella(&id)) {
     pantallaMsg("CORREGIR", "No reconocido", "");
     beepError();
     return;
   }
-
-  uint8_t id = finger.fingerID;
   char nombre[NOMBRE_MAX];
-  char msg[22];
-  char linea2[22];
+  char msg[MSG_MAX];
+  char linea2[MSG_MAX];
 
   if (buscarNombre(id, nombre)) {
     snprintf(msg, sizeof(msg), "ID %d: %s", id, nombre);

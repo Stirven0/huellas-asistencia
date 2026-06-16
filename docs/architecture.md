@@ -85,12 +85,15 @@
       │ Cambiar modo:   │
       │ 0→ Asistencia   │
       │ 1→ Enrolar      │
-      │ 2→ Corregir     │
-      └─────────────────┘
-              │
-              ▼
-           IDLE
+       │ 2→ Corregir     │
+       │ 3→ Formatear    │
+       └─────────────────┘
+               │
+               ▼
+            IDLE
 ```
+
+> Nota: El botón usa Pin 3 con `INPUT_PULLUP` (`LOW` = presionado). El diagrama original mencionaba Pin 7 — el código fuente en `constantes.h` es la autoridad.
 
 ## Flujo por modo
 
@@ -188,11 +191,13 @@ Durante la operación normal, el sistema verifica periódicamente:
 
 | Periférico | Método | Si falla |
 |------------|--------|----------|
-| **microSD** | `SD.open("/")` → root existente? | OLED: "microSD perdida - No registrar" |
-| **RTC** | `Wire.beginTransmission(0x68)` | OLED: "RTC perdido - Revisar" |
-| **AS608** | `finger.verifyPassword()` | OLED: "AS608 perdido - Revisar cable" |
+| **OLED** | `Wire.beginTransmission(0x3C)` | LED13 + Buzzer (alertaDoble), sin pantalla |
+| **microSD** | `SD.begin(CS)` | OLED: "microSD Perdida - No registrar" |
+| **RTC** | `Wire.beginTransmission(0x68)` | OLED: "RTC Perdido - Revisar conexion" |
+| **AS608** | `finger.verifyPassword()` | OLED: "AS608 Perdido - Revisar cable" |
 
-Si un periférico se recupera (reinsertado / reconectado), el sistema lo detecta en la siguiente verificación y muestra "Recuperado" en OLED.
+La verificación usa `verificador.h`: un array de structs `Periferico` con punteros a función `presente()` y `reinit()`, iterado en `loop()` cada 3s.  
+Si un periférico se recupera, se muestra "Recuperado" en OLED (excepto si OLED mismo falló).
 
 ## Diagrama de flujo principal
 
@@ -221,41 +226,30 @@ Si un periférico se recupera (reinsertado / reconectado), el sistema lo detecta
 
 ## Diagrama de módulos de software
 
+Todos los módulos viven en `src/main/` (flat, sin subdirectorios):
+
 ```
-main.ino
-    ├── enrollment/
-    │   ├── enrolamiento.h      # Interfaz pública
-    │   └── enrolamiento.cpp    # enrollFinger(), deleteTemplate()
-    ├── attendance/
-    │   ├── asistencia.h
-    │   └── asistencia.cpp      # checkAttendance(), isDuplicate()
-    ├── storage/
-    │   ├── almacenamiento.h
-    │   └── almacenamiento.cpp  # initSD(), writeRecord(), readCSV()
-    ├── display/
-    │   ├── pantalla.h
-    │   └── pantalla.cpp        # showMessage(), beepExito(), beepError()
-    └── utils/
-        ├── constantes.h        # Pines, timeouts, límites
-        └── rtc_helper.h/.cpp   # getTimestamp(), syncRTC()
+main.ino                       # setup(), loop(), formatearSistema()
+    │
+    ├── constantes.h            # Pines, CSV, modos, buffers (FECHA_MAX, MSG_MAX, etc.)
+    ├── buzzer.h/cpp            # beepExito(), beepError(), alertaDoble()
+    ├── pantalla.h/cpp          # pantallaMsg(), init/presente/reinit — solo OLED
+    ├── rtc_helper.h/cpp        # rtcInit(), obtenerFechaHora()
+    ├── almacenamiento.h/cpp    # initSD(), buscarNombre(), registrarAsistencia()
+    ├── enrolamiento.h/cpp      # as608Init(), capturarHuella(), enrollarDedo()
+    ├── asistencia.h/cpp        # tomarAsistencia(), corregirDedo()
+    ├── verificador.h/cpp       # Periferico{} struct, verificarPeriferico() — array de salud
+    └── modos.h/cpp             # HANDLERS_MODO[] + NOMBRES_MODO[], ejecutarModo()
 ```
 
-## Mapa de memoria estimado (ATmega2560)
+## Uso de memoria (ATmega2560)
 
-| Sección         | Disponible | Uso estimado |
-|-----------------|------------|--------------|
-| Flash (programa)| 256 KB     | ~80-120 KB   |
-| SRAM (runtime)  | 8 KB       | ~4-6 KB      |
-| EEPROM          | 4 KB       | No usado     |
+| Sección         | Disponible | Uso actual |
+|-----------------|------------|------------|
+| Flash (programa)| 253952 B   | ~35964 B (14%) |
+| SRAM (runtime)  | 8192 B     | ~2297 B (28%)  |
 
-### Variables estáticas críticas
-
-```cpp
-// Nunca usar String de Arduino — usar char[]
-char timestamp[20];        // "2026-06-05,08:30:00\0"
-char csvLine[40];          // "ID,Fecha,Hora\0"
-uint8_t fingerprintID;     // ID del AS608 (0-127)
-```
+> Refactorizado a módulos planos en `src/main/`. Sin `String`/`malloc`/`new` — solo `char[]` + `snprintf`.
 
 ## Direcciones I2C
 
