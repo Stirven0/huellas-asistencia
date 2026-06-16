@@ -41,33 +41,49 @@ static Periferico perifericos[PERIF_COUNT];
 
 #define VERIFICAR_CADA_MS 3000
 
+void alertarPerdidaOLED() {
+  for (int i = 0; i < 2; i++) {
+    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(200);
+    digitalWrite(LED_BUILTIN, LOW);
+    digitalWrite(BUZZER_PIN, LOW);
+    delay(200);
+  }
+}
+
+void alertarPerdida(const char* nombre, const char* solucion) {
+  digitalWrite(LED_BUILTIN, HIGH);
+  beepError();
+  digitalWrite(LED_BUILTIN, LOW);
+  pantallaMsg(nombre, "Perdido", solucion);
+}
+
 void detectarPerifericos() {
   while (true) {
     if (pantallaInit()) break;
-    alertaDoble();
+    alertarPerdidaOLED();
     delay(2000);
   }
 
   while (true) {
     if (rtcInit()) break;
-    pantallaMsg("RTC DS3231", "No detectado", "Revisar conexion");
-    beepError();
+    alertarPerdida("RTC", "Revisar conexion I2C");
     delay(2000);
   }
 
   while (true) {
     if (as608Init()) break;
     if (pantallaPresente())
-      pantallaMsg("AS608", "No detectado", "Verificar cable");
+      alertarPerdida("AS608", "Verificar cable UART");
     else
-      alertaDoble();
+      alertarPerdidaOLED();
     delay(2000);
   }
 
   while (true) {
     if (initSD()) break;
-    pantallaMsg("microSD", "No detectada", "Insertar tarjeta");
-    beepError();
+    alertarPerdida("microSD", "Insertar tarjeta SPI");
     delay(2000);
   }
 }
@@ -81,8 +97,10 @@ void revisarBoton() {
 
 void mostrarRecuperacion(const char* nombre, const char* mensaje) {
   if (!oledAlerta) {
-    pantallaMsg(nombre, mensaje, "");
+    digitalWrite(LED_BUILTIN, HIGH);
     beepExito();
+    digitalWrite(LED_BUILTIN, LOW);
+    pantallaMsg(nombre, mensaje, "");
     delay(1000);
   }
 }
@@ -143,8 +161,10 @@ void setup() {
   Serial.begin(115200);
   delay(2000);
 
+  pinMode(LED_BUILTIN, OUTPUT);
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
+  digitalWrite(LED_BUILTIN, LOW);
 
   detectarPerifericos();
 
@@ -182,33 +202,26 @@ void loop() {
     }
   }
 
-  // PRIORIDAD 1: OLED perdida → solo LED+buzzer, nada mas
   if (oledAlerta) {
-    alertaDoble();
+    alertarPerdidaOLED();
     delay(300);
     return;
   }
 
-  // PRIORIDAD 2: microSD perdida
   if (sdAlerta) {
-    pantallaMsg("microSD", "Perdida", "No registrar");
-    beepError();
+    alertarPerdida("microSD", "Insertar tarjeta");
     delay(300);
     return;
   }
 
-  // PRIORIDAD 3: RTC perdido
   if (rtcAlerta) {
-    pantallaMsg("RTC", "Perdido", "Revisar conexion");
-    beepError();
+    alertarPerdida("RTC", "Revisar conexion I2C");
     delay(300);
     return;
   }
 
-  // PRIORIDAD 4: AS608 perdido
   if (as608Alerta) {
-    pantallaMsg("AS608", "Perdido", "Revisar cable");
-    beepError();
+    alertarPerdida("AS608", "Verificar cable UART");
     delay(300);
     return;
   }
