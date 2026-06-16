@@ -41,49 +41,41 @@ static Periferico perifericos[PERIF_COUNT];
 
 #define VERIFICAR_CADA_MS 3000
 
-void alertarPerdidaOLED() {
-  for (int i = 0; i < 2; i++) {
-    digitalWrite(LED_BUILTIN, HIGH);
-    digitalWrite(BUZZER_PIN, HIGH);
-    delay(200);
-    digitalWrite(LED_BUILTIN, LOW);
-    digitalWrite(BUZZER_PIN, LOW);
-    delay(200);
-  }
-}
-
-void alertarPerdida(const char* nombre, const char* solucion) {
-  digitalWrite(LED_BUILTIN, HIGH);
-  beepError();
-  digitalWrite(LED_BUILTIN, LOW);
-  pantallaMsg(nombre, "Perdido", solucion);
-}
-
 void detectarPerifericos() {
   while (true) {
     if (pantallaInit()) break;
-    alertarPerdidaOLED();
+    alertaDoble();
     delay(2000);
   }
 
   while (true) {
     if (rtcInit()) break;
-    alertarPerdida("RTC", "Revisar conexion I2C");
+    digitalWrite(LED_BUILTIN, HIGH);
+    pantallaMsg("RTC", "No detectado", "Revisar conexion I2C");
+    beepError();
+    digitalWrite(LED_BUILTIN, LOW);
     delay(2000);
   }
 
   while (true) {
     if (as608Init()) break;
-    if (pantallaPresente())
-      alertarPerdida("AS608", "Verificar cable UART");
-    else
-      alertarPerdidaOLED();
+    if (pantallaPresente()) {
+      digitalWrite(LED_BUILTIN, HIGH);
+      pantallaMsg("AS608", "No detectado", "Verificar cable UART");
+      beepError();
+      digitalWrite(LED_BUILTIN, LOW);
+    } else {
+      alertaDoble();
+    }
     delay(2000);
   }
 
   while (true) {
     if (initSD()) break;
-    alertarPerdida("microSD", "Insertar tarjeta SPI");
+    digitalWrite(LED_BUILTIN, HIGH);
+    pantallaMsg("microSD", "No detectada", "Insertar tarjeta SPI");
+    beepError();
+    digitalWrite(LED_BUILTIN, LOW);
     delay(2000);
   }
 }
@@ -203,25 +195,34 @@ void loop() {
   }
 
   if (oledAlerta) {
-    alertarPerdidaOLED();
+    alertaDoble();
     delay(300);
     return;
   }
 
   if (sdAlerta) {
-    alertarPerdida("microSD", "Insertar tarjeta");
+    digitalWrite(LED_BUILTIN, HIGH);
+    pantallaMsg("microSD", "Perdida", "Insertar tarjeta");
+    beepError();
+    digitalWrite(LED_BUILTIN, LOW);
     delay(300);
     return;
   }
 
   if (rtcAlerta) {
-    alertarPerdida("RTC", "Revisar conexion I2C");
+    digitalWrite(LED_BUILTIN, HIGH);
+    pantallaMsg("RTC", "Perdido", "Revisar conexion I2C");
+    beepError();
+    digitalWrite(LED_BUILTIN, LOW);
     delay(300);
     return;
   }
 
   if (as608Alerta) {
-    alertarPerdida("AS608", "Verificar cable UART");
+    digitalWrite(LED_BUILTIN, HIGH);
+    pantallaMsg("AS608", "Perdido", "Verificar cable UART");
+    beepError();
+    digitalWrite(LED_BUILTIN, LOW);
     delay(300);
     return;
   }

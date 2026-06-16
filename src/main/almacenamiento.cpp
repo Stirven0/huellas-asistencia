@@ -4,8 +4,6 @@
 static bool sdOk = false;
 
 bool initSD() {
-  pinMode(SD_CS_PIN, OUTPUT);
-  digitalWrite(SD_CS_PIN, HIGH);
   sdOk = SD.begin(SD_CS_PIN);
   return sdOk;
 }

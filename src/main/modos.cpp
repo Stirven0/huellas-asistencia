@@ -9,11 +9,11 @@
 
 void formatearSistema(); // defined in main.ino, linked by Arduino build
 
-const char* NOMBRES_MODO[4] = {"ASISTENCIA", "ENROLAR", "CORREGIR", "FORMATEAR"};
+const char* NOMBRES_MODO[MODOS_COUNT] = {"ASISTENCIA", "ENROLAR", "CORREGIR", "FORMATEAR"};
 
 typedef void (*ModoHandler)();
 
-static const ModoHandler HANDLERS_MODO[4] = {
+static const ModoHandler HANDLERS_MODO[MODOS_COUNT] = {
   tomarAsistencia,
   enrollarDedo,
   corregirDedo,
@@ -21,13 +21,13 @@ static const ModoHandler HANDLERS_MODO[4] = {
 };
 
 void ejecutarModo(uint8_t modo) {
-  if (modo < 4) {
+  if (modo < MODOS_COUNT) {
     HANDLERS_MODO[modo]();
   }
 }
 
 void cambiarModo(uint8_t* modoActual) {
-  *modoActual = (*modoActual + 1) % 4;
+  *modoActual = (*modoActual + 1) % MODOS_COUNT;
   pantallaMsg("MODO:", NOMBRES_MODO[*modoActual], "Coloca el dedo");
   beepExito();
   delay(1500);

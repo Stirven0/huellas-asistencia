@@ -24,6 +24,7 @@
 #define DEBOUNCE_DELAY      50
 #define BUZZER_SHORT        100
 #define BUZZER_LONG         500
+#define BUZZER_DOUBLE       200
 #define NOMBRE_MAX          30
 #define LINEA_MAX           50
 #define FECHA_MAX           12
@@ -41,5 +42,6 @@
 #define MODO_ENROLAMIENTO   1
 #define MODO_CORRECCION     2
 #define MODO_FORMATEAR      3
+#define MODOS_COUNT         4
 
 #endif

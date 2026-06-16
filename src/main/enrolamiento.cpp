@@ -74,7 +74,7 @@ void enrollarDedo() {
       snprintf(msg, sizeof(msg), "Ya es ID %d: %s", idExistente, nombre);
     else
       snprintf(msg, sizeof(msg), "Ya es ID %d", idExistente);
-    pantallaMsg("DUP DOBLADO", msg, "");
+    pantallaMsg("DUPLICADO", msg, "");
     beepError();
     delay(2000);
     return;
@@ -109,7 +109,7 @@ void enrollarDedo() {
   }
 
   if (huellaYaExiste(&idExistente)) {
-    pantallaMsg("DUP ENROL", "Huella ya existe", "");
+    pantallaMsg("DUPLICADO", "Ya existe en BD", "");
     beepError();
     return;
   }

@@ -16,9 +16,11 @@ void beepError() {
 
 void alertaDoble() {
   for (int i = 0; i < 2; i++) {
+    digitalWrite(LED_BUILTIN, HIGH);
     digitalWrite(BUZZER_PIN, HIGH);
-    delay(200);
+    delay(BUZZER_DOUBLE);
+    digitalWrite(LED_BUILTIN, LOW);
     digitalWrite(BUZZER_PIN, LOW);
-    delay(200);
+    delay(BUZZER_DOUBLE);
   }
 }
