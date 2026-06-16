@@ -7,6 +7,13 @@
 #include "rtc_helper.h"
 
 void tomarAsistencia() {
+  if (!hayEstudiantes()) {
+    pantallaMsg("ASISTENCIA", "No hay", "estudiantes");
+    notificarError();
+    delay(2000);
+    return;
+  }
+
   pantallaMsg("ASISTENCIA", "Coloca el dedo", "");
 
   if (!esperarDedo()) return;

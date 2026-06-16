@@ -6,7 +6,17 @@ static bool sdOk = false;
 
 bool initSD() {
   sdOk = SD.begin(SD_CS_PIN);
-  return sdOk;
+  if (!sdOk) return false;
+
+  if (!SD.exists(ESTUDIANTES_CSV)) {
+    File f = SD.open(ESTUDIANTES_CSV, FILE_WRITE);
+    if (f) { f.println("ID,Nombre,Apellido"); f.close(); }
+  }
+  if (!SD.exists(ASIST_CSV)) {
+    File f = SD.open(ASIST_CSV, FILE_WRITE);
+    if (f) { f.println(CSV_HEADER); f.close(); }
+  }
+  return true;
 }
 
 bool sdPresente() {
@@ -80,6 +90,23 @@ bool esDuplicado(uint8_t id, const char* fecha) {
   }
   f.close();
   return false;
+}
+
+bool hayEstudiantes() {
+  if (!sdOk) return false;
+  File f = SD.open(ESTUDIANTES_CSV);
+  if (!f) return false;
+
+  char buf[LINEA_MAX];
+  f.readBytesUntil('\n', buf, sizeof(buf));
+
+  bool encontrado = false;
+  while (f.available()) {
+    int len = f.readBytesUntil('\n', buf, sizeof(buf));
+    if (len > 0) { encontrado = true; break; }
+  }
+  f.close();
+  return encontrado;
 }
 
 bool formatearCSVs() {
